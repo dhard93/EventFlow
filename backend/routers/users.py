@@ -14,6 +14,7 @@ def get_users(org_id: int):
     cursor.close()
     return rows
 
+
 # Get all users who have requested an event at a particular venue
 @router.get("/users/venue")
 def get_users_by_venue_req(venue_id: int):
@@ -24,11 +25,11 @@ def get_users_by_venue_req(venue_id: int):
         JOIN events E ON U.id = E.requesting_user_id
         WHERE U.org_id = E.org_id
         AND E.venue_id = %s
-
     """, (venue_id,))
     rows = cursor.fetchall()
     cursor.close()
     return rows
+
 
 # Get all guest users who have a pending event request for an org
 @router.get("/users/req_event")
@@ -68,6 +69,7 @@ def add_user(data: dict = Body(...)):
     connection.commit()
     cursor.close()
     return {"message": "User created."}
+
 
 # Delete a user from an org
 @router.delete("/users")
