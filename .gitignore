@@ -1,0 +1,54 @@
+# =========================
+# Docker
+# =========================
+
+# Local Docker overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yaml
+
+# Local Docker environment files
+.env
+.env.*
+!.env.example
+
+# Docker build and runtime artifacts
+.docker/
+docker-data/
+docker-volumes/
+
+# =========================
+# Python virtual environments
+# =========================
+
+venv/
+.venv/
+env/
+ENV/
+virtualenv/
+
+# =========================
+# Python cache and artifacts
+# =========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =========================
+# IDE and OS files
+# =========================
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
