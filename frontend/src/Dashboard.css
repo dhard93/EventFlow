@@ -455,6 +455,18 @@
   outline-offset: 2px;
 }
 
+/* Subtle highlight for today's date */
+.calendar-day.today {
+  background: #f0f0ff;
+  border-color: #d9dafe;
+  color: #4f52b8;
+  font-weight: 600;
+}
+
+.calendar-day.today:hover {
+  background: #e6e7ff;
+}
+
 /* ========================================
    UPCOMING EVENTS CARD
 ======================================== */

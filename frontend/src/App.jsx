@@ -1,30 +1,36 @@
-import './App.css';
-import Sidebar from "./components/Sidebar";
-import Calendar from './components/Calender';
-import EventTable from "./components/EventTable";
-import UpcomingEvents from './components/UpcomingEvents';
+import { useState } from "react";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import RegisterOrg from "./components/RegisterOrg";
 
-function App() {
+export default function App() {
+  const [page, setPage] = useState("login");
+
+  if (page === "register-org") {
+    return (
+      <RegisterOrg
+        onLoginClick={() => setPage("login")}
+        onRegister={(data) => {
+          console.log("Organization registration:", data);
+        }}
+      />
+    );
+  }
+
+  if (page === "register-user") {
+    return (
+      <Register
+        onLoginClick={() => setPage("login")}
+        onRegister={(data) => {
+          console.log("User registration:", data);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="app-layout">
-      <Sidebar />
-
-      <main className="main-content">
-        <header className="page-header">
-          <h1>Organization Name</h1>
-        </header>
-
-        <section className="dashboard-content">
-          <div className="dashboard-left">
-            <Calendar />
-            <UpcomingEvents />
-          </div>
-
-          <EventTable />
-        </section>
-      </main>
-    </div>
+    <Login
+      onCreateOrganizationClick={() => setPage("register-org")}
+    />
   );
 }
-
-export default App;

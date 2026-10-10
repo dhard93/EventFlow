@@ -1,4 +1,4 @@
-export default function UpcomingEvents() {
+function UpcomingEvents() {
   return (
     <section className="upcoming-panel">
       <h2>Upcoming Events</h2>
@@ -8,3 +8,5 @@ export default function UpcomingEvents() {
     </section>
   );
 }
+
+export default UpcomingEvents;

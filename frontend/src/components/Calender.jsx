@@ -5,6 +5,7 @@ function Calendar() {
     new Date(2026, 9, 1)
   );
 
+  const today = new Date();
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
@@ -51,11 +52,24 @@ function Calendar() {
           <div className="calendar-empty" key={`empty-${index}`} />
         ))}
 
-        {Array.from({ length: daysInMonth }, (_, index) => (
-          <button className="calendar-day" key={index}>
-            {index + 1}
-          </button>
-        ))}
+        {Array.from({ length: daysInMonth }, (_, index) => {
+          const day = index + 1;
+
+          const isToday =
+            year === today.getFullYear() &&
+            month === today.getMonth() &&
+            day === today.getDate();
+
+          return (
+            <button
+              className={`calendar-day${isToday ? " today" : ""}`}
+              key={day}
+              aria-current={isToday ? "date" : undefined}
+            >
+              {day}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
