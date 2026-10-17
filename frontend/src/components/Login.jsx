@@ -12,6 +12,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -23,13 +24,17 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
         password
       };
 
-      const response = await fetch("http://localhost:8000/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-      });
+      const response = await fetch(
+        "http://localhost:8000/users/login",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(loginData),
+        }
+      );
 
       const result = await response.json();
       console.log(result);
@@ -40,7 +45,11 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
       }      
 
       if (onLogin) {
-        onLogin({ email, password });
+        onLogin({
+          user_id: result.user_id,
+          account_type: result.account_type,
+          organization_name: result.organization_name,
+        });
       } else {
         setMessage("Login is ready to connect to your backend.");
       }

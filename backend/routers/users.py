@@ -1,9 +1,10 @@
 from pydantic import BaseModel
-from security import verify_password
-from fastapi import APIRouter, Body, HTTPException
+from security import *
+from fastapi import APIRouter, Body, HTTPException, Response, Request
 from database import get_db_connection
 
 router = APIRouter()
+
 
 # Get all users associated with an org
 @router.get("/users")
@@ -25,7 +26,7 @@ class LoginRequest(BaseModel):
     password: str
 
 @router.post("/users/login")
-def login(data: LoginRequest):
+def login(data: LoginRequest, response: Response):
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -46,6 +47,24 @@ def login(data: LoginRequest):
                 detail="Invalid email or password"
             )
 
+        token = create_session(cursor, user[0])
+        if not token:
+            raise HTTPException(
+                status_code=401,
+                detail="Not logged in"
+            )
+
+        connection.commit()
+        response.set_cookie(
+            key="eventflow_session",
+            value=token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=7 * 24 * 60 * 60,
+            path="/",
+        )
+
         return {
             "user_id": user[0],
             "account_type": user[2],
@@ -53,7 +72,79 @@ def login(data: LoginRequest):
         }
 
     finally:
-        cursor.close
+        cursor.close()
+        connection.close()
+
+
+@router.post("/users/logout")
+def logout(request: Request, response: Response):
+    token = request.cookies.get("eventflow_session")
+    if token:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("""
+                DELETE FROM user_sessions
+                WHERE session_token_hash = %s
+            """, (hash_session_token(token),))
+
+            connection.commit()
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    response.delete_cookie(
+        key="eventflow_session",
+        path="/",
+        httponly=True,
+        secure=False,
+        samesite="lax",
+    )
+
+    return {"message": "Logged out successfully"}
+
+
+@router.get("/users/me")
+def get_user_session(request: Request):
+    token = request.cookies.get("eventflow_session")
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Not logged in"
+        )
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT U.account_type_id, O.name
+            FROM users U
+            JOIN organizations O ON U.org_id = O.id
+            JOIN user_sessions S ON U.id = S.user_id
+            WHERE session_token_hash = %s
+            AND expires_at > %s
+        """, (
+            hash_session_token(token),
+            datetime.now(timezone.utc)
+        ))
+
+        session = cursor.fetchone()
+        if not session:
+            raise HTTPException(
+                status_code=401,
+                detail="Session invalid or expired"
+            )
+
+        return {
+                "account_type": session[0],
+                "organization_name": session[1]
+            }
+
+    finally:
+        cursor.close()
         connection.close()
 
 

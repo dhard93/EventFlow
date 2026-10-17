@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Response, Request
 from database import get_db_connection
-from security import hash_password
+from security import *
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -27,8 +28,15 @@ def get_user_org_name(user_id: int):
 
 # TODO #
 # Create function for checking if email already exists
+class CreateOrg(BaseModel):
+    organization_name: str
+    email: str
+    password: str
+    f_name: str
+    l_name: str
+
 @router.post("/organizations")
-def add_org(data: dict = Body(...)):
+def add_org(data: CreateOrg, response: Response):
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -37,7 +45,7 @@ def add_org(data: dict = Body(...)):
             INSERT INTO organizations (name)
             VALUES (%s)
             RETURNING id
-        """, (data["organization_name"],))
+        """, (data.organization_name,))
 
         org_id = cursor.fetchone()[0]
 
@@ -47,16 +55,27 @@ def add_org(data: dict = Body(...)):
             RETURNING id
         """, (
             org_id,
-            data["email"],
-            hash_password(data["password"]),
-            data["first_name"],
-            data["last_name"],
+            data.organization_name,
+            data.email,
+            data.password,
+            data.f_name,
+            data.l_name,
             1
         ))
 
         user_id = cursor.fetchone()[0]
 
+        token = create_session(cursor, user_id)
         connection.commit()
+        response.set_cookie(
+            key="eventflow_session",
+            value=token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=7 * 24 * 60 * 60,
+            path="/",
+        )
         return {"user_id": user_id}
 
     except Exception:
