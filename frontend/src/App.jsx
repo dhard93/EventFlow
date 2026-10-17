@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import RegisterOrg from "./components/RegisterOrg";
-import AdminDashboard from "./components/AdminDashboard";
+import Dashboard from "./components/Dashboard";
 
 export default function App() {
   const [page, setPage] = useState("login");
@@ -44,6 +44,37 @@ export default function App() {
     restoreSession();
   }, []);
 
+  const logout = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/users/logout",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+      );
+
+      const result = await response.json();
+      console.log(result);
+
+      if (!response.ok) {
+        SpeechSynthesisErrorEvent(`Request failed: ${response.status}`);
+        return;
+      }
+
+    setOrganizationName("");
+    setAccountType(null);
+    setPage("login");
+
+    } catch (err) {
+      console.error("Login error:", err);
+      setMessage("An unexpected error occurred.");
+    }
+  }
+
   // Avoid briefly showing the login screen before checking the cookie.
   if (isCheckingSession) {
     return <div>Checking your session...</div>;
@@ -74,29 +105,13 @@ export default function App() {
   }
 
   if (page === "dashboard") {
-    
-    switch (accountType) {
-      case 1:
-        return (
-          <AdminDashboard
-            organizationName={organizationName}
-          />
-        );
-
-      case 2:
-        return (
-          <OStaffDashboard
-            organizationName={organizationName}
-          />
-        );
-
-      case 3:
-        return (
-          <GuestDashboard
-            organizationName={organizationName}
-          />
-        );
-    }
+    return (
+      <Dashboard
+        organizationName={organizationName}
+        accountType={accountType}
+        logout={logout}
+      />
+    );
   }
 
   return (

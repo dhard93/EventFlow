@@ -1,5 +1,4 @@
-
-function Sidebar() {
+export default function GuestSidebar({ logout }) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -26,6 +25,11 @@ function Sidebar() {
         </a>
 
         <a href="#" className="nav-link">
+          <span className="nav-icon">▥</span>
+          <span>My Events</span>
+        </a>
+
+        <a href="#" className="nav-link">
           <span className="nav-icon">✉</span>
           <span>Messages</span>
           {unreadMessageCount > 0 && (
@@ -42,9 +46,19 @@ function Sidebar() {
             <span className="notification-dot" />
           )}
         </a>
+
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            logout();
+          }}
+        >
+          <span className="nav-icon">⎋</span>
+          <span>Logout</span>
+        </a>
       </nav>
     </aside>
   );
 }
-
-export default Sidebar;
