@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import "../Register.css";
 
@@ -15,35 +16,75 @@ export default function RegisterOrg({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setMessage("");
 
-    if (password.length < 8) {
-      setError("Your password must be at least 8 characters long.");
-      return;
-    }
+    try {
+      if (password.length < 8) {
+        setError("Your password must be at least 8 characters long.");
+        return;
+      }
 
-    if (password !== confirmPassword) {
-      setError("Your passwords do not match.");
-      return;
-    }
+      if (password !== confirmPassword) {
+        setError("Your passwords do not match.");
+        return;
+      }
 
-    const registrationData = {
-      organization_name: organizationName.trim(),
-      email: email.trim(),
-      password,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-    };
+      const registrationData = {
+        organization_name: organizationName.trim(),
+        email: email.trim(),
+        password,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      };
 
-    if (onRegister) {
-      onRegister(registrationData);
-    } else {
-      setMessage(
-        "Organization registration is ready to connect to your backend."
+      let response = await fetch("http://localhost:8000/organizations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      let result = await response.json();
+      console.log(result);
+
+      if (!response.ok) {
+        setError(`Request failed: ${response.status}`);
+        return;
+      }
+
+      const userId = result.user_id;
+
+      response = await fetch(
+        `http://localhost:8000/organizations/name/${userId}`
       );
+      result = await response.json();
+      console.log(result);
+
+      if (!response.ok) {
+        setError(`Request failed: ${response.status}`);
+        return;
+      }
+
+      // Register org and admin and get org name to display on dash
+      if (onRegister) {
+        onRegister({
+          ...registrationData,
+          organization_name: result[0],
+        });
+      } else {
+        setMessage(
+          "Organization registration is ready to connect to your backend."
+        );
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      // Runs after success, failure, or an early return.
     }
   }
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body
-from database import connection
+from database import get_db_connection
 import json
 
 # Constants
@@ -151,6 +151,7 @@ def build_query_filters(data):
 # Approve/deny event request
 @router.patch("/events/status")
 def process_event_request(req_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     output = {"message": "Event request approved."}
     denied_reason = None
@@ -173,7 +174,8 @@ def process_event_request(req_id: int):
     except Exception:
         connection.rollback()
         raise
-    cursor.close()
+    cursor.close
+    connection.close()
     return output
 
 
@@ -191,6 +193,7 @@ def create_event_request(data: dict = Body(...)):
             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
     """
+    connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
@@ -228,13 +231,15 @@ def create_event_request(data: dict = Body(...)):
     except Exception:
         connection.rollback()
         raise
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Event request created"}
 
 
 # Get all event requests for an org with optional keyword search and filters
 @router.get("/events")
 def get_events(filters: str):
+    connection = get_db_connection()
     cursor = connection.cursor()
     subquery = construct_resource_subquery(cursor)
     query = f"""
@@ -256,12 +261,14 @@ def get_events(filters: str):
     except Exception:
         connection.rollback()
         raise
-    cursor.close()
+    cursor.close
+    connection.close()
     return rows
 
 # Cancel event
 @router.patch("/events/cancel")
 def cancel_event(req_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE events
@@ -272,8 +279,10 @@ def cancel_event(req_id: int):
 # Delete an event request
 @router.delete("/events")
 def delete_event(req_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("DELETE FROM events WHERE id = %s", (req_id,))
     connection.commit()
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Event deleted"}

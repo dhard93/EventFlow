@@ -1,18 +1,20 @@
 from fastapi import APIRouter, Body
-from database import connection
+from database import get_db_connection
 
 router = APIRouter()
 
 # Get all spaces for a venue
 @router.get("/spaces")
 def get_venue_spaces(venue_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
         """
         SELECT * FROM SPACES WHERE venue_id = %s""", (venue_id,)
     )
     rows = cursor.fetchall()
-    cursor.close()
+    cursor.close
+    connection.close()
     return rows
 
 # Add a space to a venue
@@ -24,6 +26,7 @@ def add_space(data: dict = Body(...)):
         VALUES
             (%s, %s, %s, %s, %s)
     """
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
         query,
@@ -36,21 +39,25 @@ def add_space(data: dict = Body(...)):
         )
     )
     connection.commit()
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Space added successfully."}
 
 # Delete a space
 @router.delete("/spaces")
 def delete_space(space_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("DELETE FROM venues WHERE id = %s", (space_id,))
     connection.commit()
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Space deleted"}
 
 # Toggle space bookability
 @router.patch("/spaces/bookable")
 def toggle_venue_active_status(space_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE spaces
@@ -58,12 +65,14 @@ def toggle_venue_active_status(space_id: int):
         WHERE id = %s
     """, (space_id,))
     connection.commit()
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Space bookability updated."}
 
 # Toggle space in_use status
 @router.patch("/spaces/in_use")
 def toggle_venue_active_status(space_id: int):
+    connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE spaces
@@ -71,7 +80,8 @@ def toggle_venue_active_status(space_id: int):
         WHERE id = %s
     """, (space_id,))
     connection.commit()
-    cursor.close()
+    cursor.close
+    connection.close()
     return {"message": "Space in_use status updated."}\
 
 

@@ -1,4 +1,4 @@
 from fastapi import APIRouter, Body
-from database import connection
+from database import get_db_connection
 
 router = APIRouter()

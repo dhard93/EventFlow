@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from routers import organizations, venues, spaces, users, resources, events, conversations, messages, notifications
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(organizations.router)
 app.include_router(venues.router)

@@ -7,7 +7,7 @@ docker-compose.override.yml
 docker-compose.override.yaml
 compose.override.yaml
 
-# Local Docker environment files
+# Local environment files
 .env
 .env.*
 !.env.example

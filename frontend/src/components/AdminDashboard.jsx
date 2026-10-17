@@ -1,17 +1,17 @@
-import './Dashboard.css';
-import Sidebar from "./components/Sidebar";
-import Calendar from './components/Calender';
-import EventTable from "./components/EventTable";
-import UpcomingEvents from './components/UpcomingEvents';
+import '../Dashboard.css';
+import Sidebar from "./Sidebar";
+import Calendar from './Calender';
+import EventTable from "./EventTable";
+import UpcomingEvents from './UpcomingEvents';
 
-function App() {
+export default function AdminDashboard({ organizationName }) {
   return (
     <div className="app-layout">
       <Sidebar />
 
       <main className="main-content">
         <header className="page-header">
-          <h1>Organization Name</h1>
+          <h1>{organizationName}</h1>
         </header>
 
         <section className="dashboard-content">
@@ -26,5 +26,3 @@ function App() {
     </div>
   );
 }
-
-export default Dashboard;

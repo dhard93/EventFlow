@@ -1,20 +1,54 @@
 import { useState } from "react";
 import "../Login.css";
 
+/*
+TODO:
+  - Create 3 dashboard versions and on successful login,
+    get user's account type and show correct dashboard.
+*/
+
 export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
 
-    if (onLogin) {
-      onLogin({ email, password });
-    } else {
-      setMessage("Login is ready to connect to your backend.");
+    try {
+      const loginData = {
+        email: email.trim(),
+        password
+      };
+
+      const response = await fetch("http://localhost:8000/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      const result = await response.json();
+      console.log(result);
+
+      if (!response.ok) {
+        setError(`Request failed: ${response.status}`);
+        return;
+      }      
+
+      if (onLogin) {
+        onLogin({ email, password });
+      } else {
+        setMessage("Login is ready to connect to your backend.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      // Runs after success, failure, or an early return.
     }
   }
 
@@ -23,6 +57,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
 
     if (onCreateOrganizationClick) {
       onCreateOrganizationClick();
+      console.log("here")
     } else {
       setMessage("Organization registration will be available soon.");
     }
