@@ -35,33 +35,21 @@ export default function RegisterOrg({
       const registrationData = {
         organization_name: organizationName.trim(),
         email: email.trim(),
-        password,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        password: password.trim(),
+        f_name: firstName.trim(),
+        l_name: lastName.trim(),
       };
 
-      let response = await fetch("http://localhost:8000/organizations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registrationData),
+      const response = await fetch("http://localhost:8000/organizations", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(registrationData),
       });
 
-      let result = await response.json();
-      console.log(result);
-
-      if (!response.ok) {
-        setError(`Request failed: ${response.status}`);
-        return;
-      }
-
-      const userId = result.user_id;
-
-      response = await fetch(
-        `http://localhost:8000/organizations/name/${userId}`
-      );
-      result = await response.json();
+      const result = await response.json();
       console.log(result);
 
       if (!response.ok) {
@@ -72,8 +60,9 @@ export default function RegisterOrg({
       // Register org and admin and get org name to display on dash
       if (onRegister) {
         onRegister({
-          ...registrationData,
-          organization_name: result[0],
+          user_id: result.user_id,
+          account_type: result.account_type,
+          organization_name: result.organization_name,
         });
       } else {
         setMessage(

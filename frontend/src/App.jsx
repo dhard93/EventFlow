@@ -87,6 +87,7 @@ export default function App() {
         onRegister={(data) => {
           console.log("Organization registration:", data);
           setOrganizationName(data.organization_name);
+          setAccountType(data.account_type); // Add this line
           setPage("dashboard");
         }}
       />

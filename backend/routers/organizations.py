@@ -44,28 +44,27 @@ def add_org(data: CreateOrg, response: Response):
         cursor.execute("""
             INSERT INTO organizations (name)
             VALUES (%s)
-            RETURNING id
+            RETURNING id, name
         """, (data.organization_name,))
 
-        org_id = cursor.fetchone()[0]
+        org = cursor.fetchone()
 
         cursor.execute("""
             INSERT INTO users (org_id, email, password, f_name, l_name, account_type_id)
             VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
+            RETURNING id, account_type_id
         """, (
-            org_id,
-            data.organization_name,
+            org[0],
             data.email,
-            data.password,
+            hash_password(data.password),
             data.f_name,
             data.l_name,
             1
         ))
 
-        user_id = cursor.fetchone()[0]
+        user = cursor.fetchone()
 
-        token = create_session(cursor, user_id)
+        token = create_session(cursor, user[0])
         connection.commit()
         response.set_cookie(
             key="eventflow_session",
@@ -76,7 +75,11 @@ def add_org(data: CreateOrg, response: Response):
             max_age=7 * 24 * 60 * 60,
             path="/",
         )
-        return {"user_id": user_id}
+        return {
+            "user_id": user[0],
+            "account_type": user[1],
+            "organization_name": org[1]
+        }
 
     except Exception:
         connection.rollback()

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function Calendar() {
+export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(
     new Date(2026, 9, 1)
   );
@@ -74,5 +74,3 @@ function Calendar() {
     </section>
   );
 }
-
-export default Calendar;
