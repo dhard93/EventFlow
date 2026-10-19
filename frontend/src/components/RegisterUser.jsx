@@ -1,54 +1,66 @@
+
 import { useState } from "react";
 import "../Register.css";
 
-const accountTypes = ["Staff", "Guest"];
-
-export default function Register({ onRegister, onLoginClick }) {
-  const [organizationName, setOrganizationName] = useState("");
+export default function RegisterUser({ onRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [accountType, setAccountType] = useState("Guest");
   const [showPassword, setShowPassword] = useState(false);
+  const [accountTypeId, setAccountTypeId] = useState("2");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setMessage("");
 
-    if (password.length < 8) {
-      setError("Your password must be at least 8 characters long.");
-      return;
+    try {
+      if (password.length < 8) {
+        setError("Your password must be at least 8 characters long.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError("Your passwords do not match.");
+        return;
+      }
+
+      const registrationData = {
+        email: email.trim(),
+        password: password.trim(),
+        f_name: firstName.trim(),
+        l_name: lastName.trim(),
+        account_type_id: Number(accountTypeId)
+      };
+
+      const response = await fetch("http://localhost:8000/users", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(registrationData),
+      });
+
+      const result = await response.json();
+      console.log(result);
+
+      if (!response.ok) {
+        setError(`Request failed: ${response.status}`);
+        return;
+      }
+
+      onRegister?.();
+    } catch (err) {
+      console.error("User registration error:", err);
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      // Runs after success, failure, or an early return.
     }
-
-    if (password !== confirmPassword) {
-      setError("Your passwords do not match.");
-      return;
-    }
-
-    const userData = {
-      organization_name: organizationName.trim(),
-      email: email.trim(),
-      password,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      account_type: accountType,
-    };
-
-    if (onRegister) {
-      onRegister(userData);
-    } else {
-      setMessage("Your registration form is ready to connect.");
-    }
-  }
-
-  function handleLoginClick(event) {
-    event.preventDefault();
-    onLoginClick?.();
   }
 
   return (
@@ -61,23 +73,12 @@ export default function Register({ onRegister, onLoginClick }) {
 
         <div className="register-heading">
           <h1>Create user account</h1>
-          <p>Add a staff member or guest to your organization.</p>
+          <p>
+            Set up a staff or guest account for your organization.
+          </p>
         </div>
 
         <form className="register-form" onSubmit={handleSubmit}>
-          <div className="register-field">
-            <label htmlFor="organization-name">Organization name</label>
-            <input
-              id="organization-name"
-              type="text"
-              placeholder="Your organization"
-              autoComplete="organization"
-              value={organizationName}
-              onChange={(e) => setOrganizationName(e.target.value)}
-              required
-            />
-          </div>
-
           <div className="register-name-row">
             <div className="register-field">
               <label htmlFor="first-name">First name</label>
@@ -107,6 +108,34 @@ export default function Register({ onRegister, onLoginClick }) {
           </div>
 
           <div className="register-field">
+            <label>Account type</label>
+
+            <div className="account-type-options">
+              <label>
+                <input
+                  type="radio"
+                  name="accountType"
+                  value="2"
+                  checked={accountTypeId === "2"}
+                  onChange={(e) => setAccountTypeId(e.target.value)}
+                />
+                Staff
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="accountType"
+                  value="3"
+                  checked={accountTypeId === "3"}
+                  onChange={(e) => setAccountTypeId(e.target.value)}
+                />
+                Guest
+              </label>
+            </div>
+          </div>
+
+          <div className="register-field">
             <label htmlFor="register-email">Email address</label>
             <input
               id="register-email"
@@ -117,29 +146,6 @@ export default function Register({ onRegister, onLoginClick }) {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-          </div>
-
-          <div className="register-field">
-            <label>Account type</label>
-            <div
-              className="register-account-types"
-              role="group"
-              aria-label="Account type"
-            >
-              {accountTypes.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  className={`register-account-option ${
-                    accountType === type ? "selected" : ""
-                  }`}
-                  aria-pressed={accountType === type}
-                  onClick={() => setAccountType(type)}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="register-field">
@@ -159,7 +165,9 @@ export default function Register({ onRegister, onLoginClick }) {
                 type="button"
                 className="register-show-password"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={
+                  showPassword ? "Hide password" : "Show password"
+                }
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -194,16 +202,9 @@ export default function Register({ onRegister, onLoginClick }) {
           )}
 
           <button className="register-submit" type="submit">
-            Create account <span aria-hidden="true">→</span>
+            Create User <span aria-hidden="true">→</span>
           </button>
         </form>
-
-        <p className="register-login">
-          Already have an account?{" "}
-          <a href="#login" onClick={handleLoginClick}>
-            Sign in
-          </a>
-        </p>
 
         <p className="register-footer">
           Plan better. Bring people together.

@@ -1,4 +1,4 @@
-export default function AdminSidebar({ logout }) {
+export default function AdminSidebar({ logout, onAddUser }) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -24,9 +24,9 @@ export default function AdminSidebar({ logout }) {
           <span>My Account</span>
         </a>
 
-        <a href="#" className="nav-link">
+        <a href="#" className="nav-link" onClick={onAddUser}>
           <span className="nav-icon">⌂</span>
-          <span>My Organization</span>
+          <span>Add User</span>
         </a>
 
         <a href="#" className="nav-link">

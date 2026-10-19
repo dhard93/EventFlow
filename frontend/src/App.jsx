@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Login from "./components/Login";
-import Register from "./components/Register";
+import RegisterUser from "./components/RegisterUser";
 import RegisterOrg from "./components/RegisterOrg";
 import Dashboard from "./components/Dashboard";
 
@@ -96,7 +96,7 @@ export default function App() {
 
   if (page === "register-user") {
     return (
-      <Register
+      <RegisterUser
         onLoginClick={() => setPage("login")}
         onRegister={(data) => {
           console.log("User registration:", data);

@@ -755,3 +755,51 @@
     font-size: 0.85rem;
   }
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  position: relative;
+  width: fit-content;
+  height: auto;
+  background: white;
+  border-radius: 12px;
+}
+
+.register-page {
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.account-type-options {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.account-type-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.account-type-options input[type="radio"] {
+  margin: 0;
+}
