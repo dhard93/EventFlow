@@ -1,13 +1,18 @@
+
 import { useState } from "react";
 
-export default function Calendar() {
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(2026, 9, 1)
-  );
-
+export default function Calendar({
+  onDayClick,
+  currentMonth,
+  onMonthChange,
+  eventDates = [],
+}) {
   const today = new Date();
+
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
+
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const monthName = currentMonth.toLocaleDateString("en-US", {
     month: "long",
@@ -17,24 +22,37 @@ export default function Calendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  // Build a Set of dates that have events for quick lookups.
+  const eventDateSet = new Set(eventDates);
+
   function previousMonth() {
-    setCurrentMonth(new Date(year, month - 1, 1));
+    onMonthChange(new Date(year, month - 1, 1));
+    setSelectedDate(null);
+    onDayClick(null);
   }
 
   function nextMonth() {
-    setCurrentMonth(new Date(year, month + 1, 1));
+    onMonthChange(new Date(year, month + 1, 1));
+    setSelectedDate(null);
+    onDayClick(null);
   }
 
   return (
     <section className="calendar-panel">
       <div className="calendar-header">
-        <button onClick={previousMonth} aria-label="Previous month">
+        <button
+          onClick={previousMonth}
+          aria-label="Previous month"
+        >
           {"<"}
         </button>
 
         <h2>{monthName}</h2>
 
-        <button onClick={nextMonth} aria-label="Next month">
+        <button
+          onClick={nextMonth}
+          aria-label="Next month"
+        >
           {">"}
         </button>
       </div>
@@ -49,7 +67,10 @@ export default function Calendar() {
         )}
 
         {Array.from({ length: firstDay }, (_, index) => (
-          <div className="calendar-empty" key={`empty-${index}`} />
+          <div
+            className="calendar-empty"
+            key={`empty-${index}`}
+          />
         ))}
 
         {Array.from({ length: daysInMonth }, (_, index) => {
@@ -60,11 +81,37 @@ export default function Calendar() {
             month === today.getMonth() &&
             day === today.getDate();
 
+          const dateKey = [
+            year,
+            String(month + 1).padStart(2, "0"),
+            String(day).padStart(2, "0"),
+          ].join("-");
+
+          const hasEvents = eventDateSet.has(dateKey);
+          const isSelected = selectedDate === dateKey;
+
           return (
             <button
-              className={`calendar-day${isToday ? " today" : ""}`}
+              className={[
+                "calendar-day",
+                isToday && "today",
+                isSelected && "selected",
+                hasEvents && "has-events",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               key={day}
               aria-current={isToday ? "date" : undefined}
+              aria-label={`${monthName.split(" ")[0]} ${day}${
+                hasEvents ? ", has events" : ""
+              }`}
+              onClick={() => {
+                setSelectedDate(isSelected ? null : dateKey);
+
+                onDayClick(
+                  isSelected ? null : new Date(year, month, day)
+                );
+              }}
             >
               {day}
             </button>

@@ -40,11 +40,6 @@ export default function AdminSidebar({ logout, onAddUser, onAddVenue }) {
         </a>
 
         <a href="#" className="nav-link">
-          <span className="nav-icon">◷</span>
-          <span>Event Requests</span>
-        </a>
-
-        <a href="#" className="nav-link">
           <span className="nav-icon">↗</span>
           <span>Analytics</span>
         </a>

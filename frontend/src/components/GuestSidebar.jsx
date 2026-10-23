@@ -1,4 +1,9 @@
-export default function GuestSidebar({ logout, onRequestEvent }) {
+
+export default function GuestSidebar({
+  logout,
+  onRequestEvent,
+  onMyEvents,
+}) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -8,7 +13,9 @@ export default function GuestSidebar({ logout, onRequestEvent }) {
         <div className="brand-mark">E</div>
         <div>
           <h2>EventFlow</h2>
-          <span className="brand-subtitle">EVENT MANAGEMENT</span>
+          <span className="brand-subtitle">
+            EVENT MANAGEMENT
+          </span>
         </div>
       </div>
 
@@ -25,18 +32,25 @@ export default function GuestSidebar({ logout, onRequestEvent }) {
         </a>
 
         <a
-            href="#"
-            className="nav-link"
-            onClick={(e) => {
-              e.preventDefault();
-              onRequestEvent?.();
-            }}
-          >
-            <span className="nav-icon">✚</span>
-            <span>Request Event</span>
-          </a>
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onRequestEvent?.();
+          }}
+        >
+          <span className="nav-icon">✚</span>
+          <span>Request Event</span>
+        </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onMyEvents?.();
+          }}
+        >
           <span className="nav-icon">▥</span>
           <span>My Events</span>
         </a>

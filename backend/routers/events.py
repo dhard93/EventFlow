@@ -118,38 +118,6 @@ def update_inventory(curs, chair_diff, table_diff):
         WHERE E.space_id = S.id
     """, (chair_diff, chair_diff, table_diff, table_diff))
 
-# Construct subquery for getting number of each requested resource in a request
-def construct_resource_subquery(curs):
-    curs.execute("SELECT id, name FROM resource_types")
-    rows = curs.fetchall()
-    outstr = ""
-    row_count = 0
-    for row in rows:
-        r_id, r_name = row
-        outstr += f"MAX(CASE WHEN R.id = {r_id} THEN R.name || ': ' || RR.quantity::text END) AS {r_name}"
-        if row_count < len(rows) - 1:
-            outstr += ",\n"
-        row_count += 1
-    return outstr
-
-# Convert JSON block of search filters into sql WHERE clause for filtered search results
-def build_query_filters(data):
-    conditions = []
-    params = []
-    filter_list = json.loads(data) if data else []
-    search_filter = filter_list.get("search_filter", {})
-    time_filter = filter_list.get("time_filter", {})
-    outstr = " WHERE"
-    for k, v in filter_list["org_filter"].items():
-        outstr += f" {k} = {v}"
-    if search_filter:
-        for k, v in search_filter.items():
-            outstr += f" AND {k}::text ILIKE '%%{v}%%'"
-    if time_filter:
-        for k, v in time_filter.items():
-            outstr += f" AND {k} {v}"
-    return outstr
-
 
 # Approve/deny event request
 @router.patch("/events/status")
@@ -177,7 +145,7 @@ def process_event_request(req_id: int):
     except Exception:
         connection.rollback()
         raise
-    cursor.close
+    cursor.close()
     connection.close()
     return output
 
@@ -257,59 +225,74 @@ def create_event_request(data: EventData):
     except Exception:
         connection.rollback()
         raise
-    cursor.close
+    cursor.close()
     connection.close()
     return {"message": "Event request created"}
 
 
-# TODO # Change to accept pydantic class
-# Get all event requests for an org with optional keyword search and filters
-@router.get("/events")
-def get_events(filters: str):
+# Get all approved events in the current month
+@router.get("/events/{org_id}/{month}/{year}")
+def get_events(org_id: int, month: int, year: int):
     connection = get_db_connection()
     cursor = connection.cursor()
-    subquery = construct_resource_subquery(cursor)
-    query = f"""
-        SELECT
-        E.title, V.name, S.name, E.start_time, E.end_time, U.f_name, U.l_name,  E.description, {subquery}, E.denied_reason
-        FROM events E
-        JOIN users U ON U.id = E.requesting_user_id
-        JOIN venues V ON E.venue_id = V.id
-        JOIN spaces S ON E.space_id = S.id
-        LEFT JOIN event_request_resources RR ON RR.request_id = E.id
-        LEFT JOIN resource_types R ON RR.resource_type_id = R.id
-    """
-    query += build_query_filters(filters)
-    query += " GROUP BY U.f_name, U.l_name, V.name, S.name, E.start_time, E.end_time, E.title, E.description, E.denied_reason"
-    
     try:
-        cursor.execute(query, filters)
+        cursor.execute("""
+            SELECT E.title, V.name, S.name, E.start_time, E.end_time, E.description, E.is_recurring, E.recurrence_type, E.recurrence_end_date
+            FROM events E
+            JOIN venues V ON E.venue_id = V.id
+            JOIN spaces S ON E.space_id = S.id
+            WHERE E.org_id = %s AND
+            E.request_status_id = %s AND
+            EXTRACT(MONTH FROM E.start_time) = %s AND
+            EXTRACT(YEAR FROM E.start_time) = %s
+        """, (org_id, APPROVED, month, year))
         rows = cursor.fetchall()
+        return rows
     except Exception:
         connection.rollback()
         raise
-    cursor.close
-    connection.close()
-    return rows
+    finally:
+        cursor.close()
+        connection.close()
+
+# Get all approved events requested by a specific user
+@router.get("/events/user/{user_id}")
+def get_pending_requests(user_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.date_approved
+            FROM events E
+            JOIN venues V ON E.venue_id = V.id
+            JOIN spaces S ON E.space_id = S.id
+            WHERE E.requesting_user_id = %s
+        """, (user_id,))
+        rows = cursor.fetchall()
+        return rows
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
 # Cancel event
-@router.patch("/events/cancel")
+@router.patch("/events/{event_id}/cancel")
 def cancel_event(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("""
-        UPDATE events
-        SET request_status_id = %s
-        WHERE id = %s
-    """, (CANCELLED, req_id,))
 
-# Delete an event request
-@router.delete("/events")
-def delete_event(req_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM events WHERE id = %s", (req_id,))
-    connection.commit()
-    cursor.close
+    try:
+        cursor.execute("""
+            UPDATE events
+            SET request_status_id = %s
+            WHERE id = %s
+        """, (CANCELLED, event_id,))
+        connection.commit()
+        return {"message":"Event cancelled."}
+    except Exception:
+        connection.rollback()
+        raise
+    cursor.close()
     connection.close()
-    return {"message": "Event deleted"}

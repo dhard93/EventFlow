@@ -1177,3 +1177,41 @@
   box-sizing: border-box;
   background: transparent;
 }
+
+.calendar-day.selected {
+  border: 2px solid #2563eb;
+}
+
+.modal-content.my-requests-modal {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .modal-content.my-requests-modal {
+    max-width: calc(100vw - 1rem);
+    max-height: 95vh;
+    max-height: 95dvh;
+  }
+}
+
+.calendar-day.has-events::after {
+  content: "";
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  width: 0.4rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #6366d9;
+  box-shadow: 0 0 0 2px #6366d91a;
+  transform: translateX(-50%);
+}
+
+.calendar-day.selected.has-events::after {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #ffffff30;
+}
