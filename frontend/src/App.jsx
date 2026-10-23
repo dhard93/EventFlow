@@ -6,6 +6,8 @@ import Dashboard from "./components/Dashboard";
 
 export default function App() {
   const [page, setPage] = useState("login");
+  const [userId, setUserId] = useState(null);
+  const [organizationId, setOrganizationId] = useState(null);
   const [organizationName, setOrganizationName] = useState("");
   const [accountType, setAccountType] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -29,7 +31,10 @@ export default function App() {
         }
 
         const user = await response.json();
+        console.log("Restored session user:", user);
 
+        setUserId(user.user_id);
+        setOrganizationId(user.organization_id);
         setOrganizationName(user.organization_name);
         setAccountType(user.account_type);
         setPage("dashboard");
@@ -87,7 +92,9 @@ export default function App() {
         onRegister={(data) => {
           console.log("Organization registration:", data);
           setOrganizationName(data.organization_name);
-          setAccountType(data.account_type); // Add this line
+          setAccountType(data.account_type);
+          setUserId(data.user_id);
+          setOrganizationId(data.organization_id);
           setPage("dashboard");
         }}
       />
@@ -97,7 +104,7 @@ export default function App() {
   if (page === "register-user") {
     return (
       <RegisterUser
-        onLoginClick={() => setPage("login")}
+
         onRegister={(data) => {
           console.log("User registration:", data);
         }}
@@ -108,6 +115,8 @@ export default function App() {
   if (page === "dashboard") {
     return (
       <Dashboard
+        organizationId={organizationId}
+        userId={userId}
         organizationName={organizationName}
         accountType={accountType}
         logout={logout}
@@ -120,6 +129,8 @@ export default function App() {
       onLogin={(user) => {
         setOrganizationName(user.organization_name);
         setAccountType(user.account_type);
+        setUserId(user.user_id);
+        setOrganizationId(user.organization_id);
         setPage("dashboard");
       }}
       onCreateOrganizationClick={() => setPage("register-org")}

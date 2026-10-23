@@ -1,4 +1,4 @@
-export default function GuestSidebar({ logout }) {
+export default function GuestSidebar({ logout, onRequestEvent }) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -23,6 +23,18 @@ export default function GuestSidebar({ logout }) {
           <span className="nav-icon">◉</span>
           <span>My Account</span>
         </a>
+
+        <a
+            href="#"
+            className="nav-link"
+            onClick={(e) => {
+              e.preventDefault();
+              onRequestEvent?.();
+            }}
+          >
+            <span className="nav-icon">✚</span>
+            <span>Request Event</span>
+          </a>
 
         <a href="#" className="nav-link">
           <span className="nav-icon">▥</span>

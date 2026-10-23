@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Body
 from database import get_db_connection
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
 import json
 
 # Constants
@@ -180,8 +183,30 @@ def process_event_request(req_id: int):
 
 
 # Create new event request
+class Resources(BaseModel):
+    Chairs: int = 0
+    Tables: int = 0
+    Microphones: int = 0
+    Podiums: int = 0
+    TVs: int = 0
+
+class EventData(BaseModel):
+    org_id: int
+    venue_id: int
+    space_id: int
+    requesting_user_id: int
+    title: str
+    description: Optional[str] = None
+    attendee_count: int
+    start_time: datetime
+    end_time: datetime
+    is_recurring: bool
+    recurrence_type: Optional[str] = None
+    recurrence_end_date: Optional[datetime] = None
+    resources: Resources = Resources()
+
 @router.post("/events")
-def create_event_request(data: dict = Body(...)):
+def create_event_request(data: EventData):
     query = """
         INSERT INTO events
             (
@@ -201,32 +226,33 @@ def create_event_request(data: dict = Body(...)):
         cursor.execute(
             query,
             (
-                data["org_id"],
-                data["venue_id"],
-                data["space_id"],
-                data["requesting_user_id"],
-                data["title"],
-                data["description"],
-                data["attendee_count"],
-                data["start_time"],
-                data["end_time"],
-                data["is_recurring"],
-                data["recurrence_type"],
-                data["recurrence_end_date"],
-                data["request_status_id"]
+                data.org_id,
+                data.venue_id,
+                data.space_id,
+                data.requesting_user_id,
+                data.title,
+                data.description,
+                data.attendee_count,
+                data.start_time,
+                data.end_time,
+                data.is_recurring,
+                data.recurrence_type,
+                data.recurrence_end_date,
+                3
             )
         )
 
         req_id = cursor.fetchone()[0]
+        resources = data.resources.model_dump()
 
-        # If data contains values for any resources, add row(s) to event_request_resources table
-        resources = data.get("resources", {})
-        if resources:
-            for k, v in resources.items():
+        for resource_type_id, (resource_name, quantity) in enumerate(
+            resources.items(), start=1):
+            if quantity > 0:
                 cursor.execute("""
-                    INSERT INTO event_request_resources (request_id, resource_type_id, quantity)
+                    INSERT INTO event_request_resources
+                        (request_id, resource_type_id, quantity)
                     VALUES (%s, %s, %s)
-                """, (req_id, k, v))
+                """, (req_id, resource_type_id, quantity))
         connection.commit()
     except Exception:
         connection.rollback()
@@ -236,6 +262,7 @@ def create_event_request(data: dict = Body(...)):
     return {"message": "Event request created"}
 
 
+# TODO # Change to accept pydantic class
 # Get all event requests for an org with optional keyword search and filters
 @router.get("/events")
 def get_events(filters: str):

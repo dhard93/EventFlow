@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from security import *
-from fastapi import APIRouter, Body, HTTPException, Response, Request
+from fastapi import APIRouter, HTTPException, Response, Request
 from database import get_db_connection
 
 router = APIRouter()
@@ -15,7 +15,7 @@ def get_users(org_id: int):
         SELECT * FROM users WHERE org_id = %s
     """, (org_id,))
     rows = cursor.fetchall()
-    cursor.close
+    cursor.close()
     connection.close()
     return rows
 
@@ -32,7 +32,7 @@ def login(data: LoginRequest, response: Response):
 
     try:
         cursor.execute("""
-            SELECT U.id, U.password, U.account_type_id, O.name
+            SELECT U.id, U.password, U.account_type_id, O.id, O.name
             FROM users U
             JOIN organizations O
             ON O.id = U.org_id
@@ -68,7 +68,8 @@ def login(data: LoginRequest, response: Response):
         return {
             "user_id": user[0],
             "account_type": user[2],
-            "organization_name": user[3]
+            "organization_id": user[3],
+            "organization_name": user[4]
         }
 
     finally:
@@ -120,7 +121,7 @@ def get_user_session(request: Request):
 
     try:
         cursor.execute("""
-            SELECT U.account_type_id, O.name
+            SELECT U.id, U.account_type_id, O.id, O.name
             FROM users U
             JOIN organizations O ON U.org_id = O.id
             JOIN user_sessions S ON U.id = S.user_id
@@ -139,8 +140,10 @@ def get_user_session(request: Request):
             )
 
         return {
-                "account_type": session[0],
-                "organization_name": session[1]
+            "user_id": session[0],
+            "account_type": session[1],
+            "organization_id": session[2],
+            "organization_name": session[3]
             }
 
     finally:
@@ -161,7 +164,7 @@ def get_users_by_venue_req(venue_id: int):
         AND E.venue_id = %s
     """, (venue_id,))
     rows = cursor.fetchall()
-    cursor.close
+    cursor.close()
     connection.close()
     return rows
 
@@ -179,35 +182,44 @@ def get_requesting_users(org_id: int):
         WHERE E.request_status_id = 3 AND E.org_id = %s
     """, (org_id,))
     rows = cursor.fetchall()
-    cursor.close
+    cursor.close()
     connection.close()
     return rows
 
 
 # Add a user to an org
+class UserData(BaseModel):
+    org_id: int
+    email: str
+    password: str
+    f_name: str
+    l_name: str
+    account_type_id: int
+
 @router.post("/users")
-def add_user(data: dict = Body(...)):
-    query = """
-        INSERT INTO users (org_id, email, password, f_name, l_name, account_type_id)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """
+def add_user(data: UserData):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute(
-        query,
-        (
-            data["org_id"],
-            data["email"],
-            data["password"],
-            data["f_name"],
-            data["l_name"],
-            data["account_type_id"]
+
+    try:
+        cursor.execute("""
+            INSERT INTO users (org_id, email, password, f_name, l_name, account_type_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+                data.org_id,
+                data.email,
+                hash_password(data.password),
+                data.f_name,
+                data.l_name,
+                data.account_type_id
+            )
         )
-    )
-    connection.commit()
-    cursor.close
-    connection.close()
-    return {"message": "User created."}
+        connection.commit()
+        return {"message": "User created."}
+    finally:
+        connection.commit()
+        cursor.close()
+        connection.close()
 
 
 # Delete a user from an org
@@ -217,6 +229,6 @@ def delete_user(user_id: int):
     cursor = connection.cursor()
     cursor.execute("DELETE FROM users WHERE id = %s", (user_id))
     connection.commit()
-    cursor.close
+    cursor.close()
     connection.close()
     return {"message": "User deleted"}

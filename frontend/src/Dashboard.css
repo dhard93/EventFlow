@@ -803,3 +803,377 @@
 .account-type-options input[type="radio"] {
   margin: 0;
 }
+
+
+/* Add Venue Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(17, 24, 39, 0.5);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 850px;
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.add-venue-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  color: #20283a;
+}
+
+.add-venue-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.add-venue-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #eeeeff;
+  color: #6366d9;
+}
+
+.add-venue-heading-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.add-venue-heading-copy {
+  flex: 1;
+}
+
+.add-venue-heading-copy h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.add-venue-heading-copy p {
+  margin: 0.3rem 0 0;
+  color: #778197;
+  font-size: 0.85rem;
+}
+
+.add-venue-close {
+  border: 0;
+  background: none;
+  color: #778197;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.add-venue-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.add-venue-form-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.add-venue-section {
+  margin-bottom: 1.5rem;
+}
+
+.add-venue-section-heading {
+  margin-bottom: 1rem;
+}
+
+.add-venue-section-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.add-venue-section-heading p {
+  margin: 0.3rem 0 0;
+  color: #778197;
+  font-size: 0.82rem;
+}
+
+.add-venue-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  margin-bottom: 0.9rem;
+}
+
+.add-venue-field label {
+  color: #465066;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.add-venue-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #20283a;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.add-venue-field input:focus,
+.add-venue-space-row input:focus {
+  outline: none;
+  border-color: #7779e5;
+  box-shadow: 0 0 0 3px #6366d91a;
+}
+
+.add-venue-location-row {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Spaces editor */
+.add-venue-spaces-section {
+  padding-top: 0.25rem;
+}
+
+.add-venue-spaces-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.add-venue-space-list {
+  overflow-x: auto;
+  border: 1px solid #e5e8ef;
+  border-radius: 8px;
+}
+
+.add-venue-space-labels,
+.add-venue-space-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 2fr) repeat(5, minmax(65px, 0.8fr)) 28px;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 650px;
+  padding: 0.7rem;
+}
+
+.add-venue-space-labels {
+  background: #f8f9fc;
+  border-bottom: 1px solid #e5e8ef;
+  color: #778197;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.add-venue-space-labels span:not(:first-child) {
+  text-align: center;
+}
+
+.add-venue-space-row + .add-venue-space-row {
+  border-top: 1px solid #edf0f5;
+}
+
+.add-venue-space-name,
+.add-venue-space-number {
+  min-width: 0;
+}
+
+.add-venue-space-row input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.55rem 0.4rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 5px;
+  color: #20283a;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.add-venue-space-number input {
+  text-align: center;
+}
+
+.add-venue-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.add-venue-remove-space {
+  border: 0;
+  background: transparent;
+  color: #9aa2b2;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.add-venue-remove-space:hover {
+  color: #d14343;
+}
+
+.add-venue-add-space {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: #595bd4;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.add-venue-add-icon {
+  font-size: 1.2rem;
+}
+
+.add-venue-space-note {
+  margin: 0.4rem 0 0;
+  color: #8991a3;
+  font-size: 0.78rem;
+}
+
+/* Errors and footer */
+.add-venue-error {
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: #fff0f0;
+  color: #b42323;
+  font-size: 0.85rem;
+}
+
+.add-venue-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e8ef;
+  background: #fff;
+}
+
+.add-venue-footer-note {
+  color: #778197;
+  font-size: 0.78rem;
+}
+
+.add-venue-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.add-venue-cancel,
+.add-venue-submit {
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-venue-cancel {
+  border: 1px solid #dfe3eb;
+  background: #fff;
+  color: #465066;
+}
+
+.add-venue-submit {
+  border: 1px solid #6366d9;
+  background: #6366d9;
+  color: #fff;
+}
+
+.add-venue-submit:hover:not(:disabled) {
+  background: #5154c3;
+}
+
+.add-venue-cancel:hover:not(:disabled) {
+  background: #f8f9fc;
+}
+
+.add-venue-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .add-venue-card {
+    max-height: 95vh;
+  }
+
+  .add-venue-header,
+  .add-venue-form-content {
+    padding: 1rem;
+  }
+
+  .add-venue-location-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .add-venue-location-row .add-venue-field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .add-venue-footer {
+    padding: 0.85rem 1rem;
+  }
+
+  .add-venue-footer-note {
+    display: none;
+  }
+}
+
+/* Add User modal only */
+.modal-content:has(.register-page) {
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+  max-height: none;
+  overflow: visible;
+  border-radius: 12px;
+}
+
+.register-page {
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+}

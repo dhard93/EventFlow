@@ -4,18 +4,19 @@ from database import get_db_connection
 router = APIRouter()
 
 # Get all spaces for a venue
-@router.get("/spaces")
+@router.get("/spaces/{venue_id}")
 def get_venue_spaces(venue_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute(
-        """
-        SELECT * FROM SPACES WHERE venue_id = %s""", (venue_id,)
+    cursor.execute("""
+        SELECT id, name
+        FROM SPACES
+        WHERE venue_id = %s""", (venue_id,)
     )
     rows = cursor.fetchall()
-    cursor.close
+    cursor.close()
     connection.close()
-    return rows
+    return [{"id": row[0], "name": row[1]} for row in rows]
 
 # Add a space to a venue
 @router.post("/spaces")
@@ -39,7 +40,7 @@ def add_space(data: dict = Body(...)):
         )
     )
     connection.commit()
-    cursor.close
+    cursor.close()
     connection.close()
     return {"message": "Space added successfully."}
 
@@ -65,7 +66,7 @@ def toggle_venue_active_status(space_id: int):
         WHERE id = %s
     """, (space_id,))
     connection.commit()
-    cursor.close
+    cursor.close()
     connection.close()
     return {"message": "Space bookability updated."}
 
@@ -80,7 +81,7 @@ def toggle_venue_active_status(space_id: int):
         WHERE id = %s
     """, (space_id,))
     connection.commit()
-    cursor.close
+    cursor.close()
     connection.close()
     return {"message": "Space in_use status updated."}\
 

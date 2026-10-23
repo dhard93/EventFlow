@@ -48,6 +48,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
         onLogin({
           user_id: result.user_id,
           account_type: result.account_type,
+          organization_id: result.organization_id,
           organization_name: result.organization_name,
         });
       } else {

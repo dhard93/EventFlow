@@ -2,7 +2,7 @@
 import { useState } from "react";
 import "../Register.css";
 
-export default function RegisterUser({ onRegister }) {
+export default function RegisterUser({ onRegister, organizationId }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +30,7 @@ export default function RegisterUser({ onRegister }) {
       }
 
       const registrationData = {
+        org_id: organizationId,
         email: email.trim(),
         password: password.trim(),
         f_name: firstName.trim(),

@@ -5,10 +5,6 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# TODO #
-# Use pydantic classes for endpoints with structured data
-# instead of Bodies
-
 @router.get("/organizations/name/{user_id}")
 def get_user_org_name(user_id: int):
     connection = get_db_connection()
@@ -78,6 +74,7 @@ def add_org(data: CreateOrg, response: Response):
         return {
             "user_id": user[0],
             "account_type": user[1],
+            "organization_id": org[0],
             "organization_name": org[1]
         }
 
