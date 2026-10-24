@@ -119,9 +119,28 @@ def update_inventory(curs, chair_diff, table_diff):
     """, (chair_diff, chair_diff, table_diff, table_diff))
 
 
-# Approve/deny event request
-@router.patch("/events/status")
-def process_event_request(req_id: int):
+# Manually approve/deny/cancel event
+@router.patch("/events/process/{status}/{req_id}")
+def manual_process_event_request(status: int, req_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute( """
+            UPDATE events
+            SET request_status_id = %s
+            WHERE id = %s
+        """, (status, req_id))
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    cursor.close()
+    connection.close()
+
+
+# Auto-approve/deny event request
+@router.patch("/events/process/auto/{req_id}")
+def auto_process_event_request(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     output = {"message": "Event request approved."}
@@ -206,7 +225,7 @@ def create_event_request(data: EventData):
                 data.is_recurring,
                 data.recurrence_type,
                 data.recurrence_end_date,
-                3
+                PENDING
             )
         )
 
@@ -230,11 +249,38 @@ def create_event_request(data: EventData):
     return {"message": "Event request created"}
 
 
+# Get all pending events for an organization
+@router.get("/events/pending/{org_id}")
+def get_pending_requests(org_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.description, E.is_recurring, E.recurrence_type, E.recurrence_end_date, U.f_name, U.l_name
+            FROM events E
+            JOIN venues V ON E.venue_id = V.id
+            JOIN spaces S ON E.space_id = S.id
+            JOIN users U ON E.requesting_user_id = U.id
+            WHERE E.org_id = %s
+            AND request_status_id = %s
+            ORDER BY E.start_time ASC
+        """, (org_id, PENDING))
+        rows = cursor.fetchall()
+        return rows
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
 # Get all approved events in the current month
-@router.get("/events/{org_id}/{month}/{year}")
+@router.get("/events/approved/{org_id}/{month}/{year}")
 def get_events(org_id: int, month: int, year: int):
     connection = get_db_connection()
     cursor = connection.cursor()
+    event_date = datetime(year, month, 1)
     try:
         cursor.execute("""
             SELECT E.title, V.name, S.name, E.start_time, E.end_time, E.description, E.is_recurring, E.recurrence_type, E.recurrence_end_date
@@ -242,10 +288,15 @@ def get_events(org_id: int, month: int, year: int):
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id
             WHERE E.org_id = %s AND
-            E.request_status_id = %s AND
-            EXTRACT(MONTH FROM E.start_time) = %s AND
-            EXTRACT(YEAR FROM E.start_time) = %s
-        """, (org_id, APPROVED, month, year))
+            E.request_status_id = %s AND ((
+                EXTRACT(MONTH FROM E.start_time) = %s AND
+                EXTRACT(YEAR FROM E.start_time) = %s
+            ) OR (
+                E.is_recurring = %s AND
+                DATE_TRUNC('month', E.start_time) <= %s AND
+                DATE_TRUNC('month', E.recurrence_end_date) >= %s
+            ))
+        """, (org_id, APPROVED, month, year, True, event_date, event_date))
         rows = cursor.fetchall()
         return rows
     except Exception:
@@ -267,7 +318,8 @@ def get_pending_requests(user_id: int):
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id
             WHERE E.requesting_user_id = %s
-        """, (user_id,))
+            AND E.request_status_id = %s
+        """, (user_id, APPROVED))
         rows = cursor.fetchall()
         return rows
     except Exception:
@@ -276,23 +328,3 @@ def get_pending_requests(user_id: int):
     finally:
         cursor.close()
         connection.close()
-
-# Cancel event
-@router.patch("/events/{event_id}/cancel")
-def cancel_event(req_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    try:
-        cursor.execute("""
-            UPDATE events
-            SET request_status_id = %s
-            WHERE id = %s
-        """, (CANCELLED, event_id,))
-        connection.commit()
-        return {"message":"Event cancelled."}
-    except Exception:
-        connection.rollback()
-        raise
-    cursor.close()
-    connection.close()

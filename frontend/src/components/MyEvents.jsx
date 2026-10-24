@@ -6,7 +6,7 @@ const EVENTS_URL = (userId) =>
   `http://localhost:8000/events/user/${userId}`;
 
 const CANCEL_EVENT_URL = (eventId) =>
-  `http://localhost:8000/events/${eventId}/cancel`;
+  `http://localhost:8000/events/process/4/${eventId}`;
 
 const COLUMNS = [
   { key: "title", label: "Event title" },
@@ -116,6 +116,7 @@ export default function MyEvents({
     return () => controller.abort();
   }, [loadEvents]);
 
+
   async function handleCancel(row) {
     const eventId = row.event_id;
 
@@ -124,7 +125,11 @@ export default function MyEvents({
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to cancel "${row.title}"?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to cancel "${row.title}"?`
+      )
+    ) {
       return;
     }
 
@@ -134,15 +139,8 @@ export default function MyEvents({
 
     try {
       const response = await fetch(CANCEL_EVENT_URL(eventId), {
-        method: "POST",
+        method: "PATCH",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event_id: eventId,
-          requesting_user_id: Number(userId),
-        }),
       });
 
       if (!response.ok) {
@@ -150,6 +148,7 @@ export default function MyEvents({
 
         try {
           const result = await response.json();
+
           if (result.detail) {
             detail =
               typeof result.detail === "string"
@@ -164,17 +163,25 @@ export default function MyEvents({
       }
 
       setEvents((previous) =>
-        previous.filter((item) => item.event_id !== eventId)
+        previous.filter(
+          (item) => item.event_id !== eventId
+        )
       );
 
-      setMessage(`"${row.title}" was cancelled successfully.`);
+      setMessage(
+        `"${row.title}" was cancelled successfully.`
+      );
+
       onRequestCancelled?.(row);
     } catch (err) {
-      setError(err.message || "Failed to cancel the event.");
+      setError(
+        err.message || "Failed to cancel the event."
+      );
     } finally {
       setCancellingId(null);
     }
   }
+
 
   return (
     <div

@@ -1,5 +1,6 @@
 import '../EventTable.css';
 
+// Add resource counts and is_set to cols/endpoint
 export default function EventTable({ selectedDayEvents = [] }) {
   const columns = [
     { label: "Title", index: 0, width: "16%" },

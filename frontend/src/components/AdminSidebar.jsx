@@ -1,4 +1,9 @@
-export default function AdminSidebar({ logout, onAddUser, onAddVenue }) {
+export default function AdminSidebar({
+  logout,
+  onAddUser,
+  onAddVenue,
+  onEventRequests
+}) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -27,6 +32,18 @@ export default function AdminSidebar({ logout, onAddUser, onAddVenue }) {
         <a href="#" className="nav-link">
           <span className="nav-icon">♙</span>
           <span>My Organization</span>
+        </a>
+
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onEventRequests();
+          }}
+        >
+          <span className="nav-icon">▣</span>
+          <span>Event Requests</span>
         </a>
 
         <a href="#" className="nav-link" onClick={onAddUser}>

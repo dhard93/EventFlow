@@ -1,3 +1,5 @@
+import "../Upcoming.css"
+
 function UpcomingEvents() {
   return (
     <section className="upcoming-panel">

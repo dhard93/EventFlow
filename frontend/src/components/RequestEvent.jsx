@@ -2,6 +2,19 @@
 import { useEffect, useState } from "react";
 import "../RequestEvent.css";
 
+const RECURRENCE_OPTIONS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  {
+    value: "monthly_date",
+    label: "Monthly (same date)",
+  },
+  {
+    value: "monthly_weekday",
+    label: "Monthly (same weekday)",
+  },
+];
+
 export default function RequestEvent({
   organizationId,
   userId,
@@ -174,14 +187,29 @@ export default function RequestEvent({
                 return;
             }
 
-            if (
-                isRecurring === "true" &&
-                (!recurrenceType || !recurrenceEndDate)
-            ) {
+            if (isRecurring === "true") {
+              if (!recurrenceType || !recurrenceEndDate) {
                 setError(
-                    "Please select a recurrence type and end date."
+                  "Please select a recurrence type and end date."
                 );
                 return;
+              }
+
+              if (recurrenceEndDate < startTime.slice(0, 10)) {
+                setError(
+                  "The recurrence end date cannot be before the event start date."
+                );
+                return;
+              }
+
+              if (
+                !RECURRENCE_OPTIONS.some(
+                  (option) => option.value === recurrenceType
+                )
+              ) {
+                setError("Please select a valid recurrence type.");
+                return;
+              }
             }
 
             const eventData = {
@@ -482,27 +510,24 @@ export default function RequestEvent({
                 </span>
 
                 <div className="request-event-options">
-                    {["daily", "weekly", "monthly"].map(
-                    (type) => (
-                        <label
-                        className="request-event-option"
-                        key={type}
-                        >
-                        <input
-                            type="radio"
-                            name="recurrenceType"
-                            value={type}
-                            checked={recurrenceType === type}
-                            onChange={(e) =>
-                            setRecurrenceType(e.target.value)
-                            }
-                            required
-                        />
-                        {type.charAt(0).toUpperCase() +
-                            type.slice(1)}
-                        </label>
-                    )
-                    )}
+                  {RECURRENCE_OPTIONS.map((option) => (
+                    <label
+                      className="request-event-option"
+                      key={option.value}
+                    >
+                      <input
+                        type="radio"
+                        name="recurrenceType"
+                        value={option.value}
+                        checked={recurrenceType === option.value}
+                        onChange={(e) =>
+                          setRecurrenceType(e.target.value)
+                        }
+                        required
+                      />
+                      {option.label}
+                    </label>
+                  ))}
                 </div>
                 </div>
 

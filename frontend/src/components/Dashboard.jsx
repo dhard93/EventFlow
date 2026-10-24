@@ -1,4 +1,3 @@
-
 import '../Dashboard.css';
 import { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
@@ -11,6 +10,129 @@ import RegisterUser from './RegisterUser';
 import AddVenue from './AddVenue';
 import RequestEvent from './RequestEvent';
 import MyEvents from "./MyEvents";
+import EventRequests from "./EventRequests";
+
+// Determines whether a date is the same ordinal weekday as the
+// original start date, e.g. the first Monday or last Friday.
+function matchesMonthlyWeekday(dateKey, startDate) {
+  const [sy, sm, sd] = startDate.split("-").map(Number);
+  const [y, m, d] = dateKey.split("-").map(Number);
+
+  const start = new Date(Date.UTC(sy, sm - 1, sd));
+  const candidate = new Date(Date.UTC(y, m - 1, d));
+
+  // Must be the same weekday.
+  if (candidate.getUTCDay() !== start.getUTCDay()) {
+    return false;
+  }
+
+  // Which occurrence of that weekday is the start date?
+  const occurrence = Math.ceil(sd / 7);
+
+  // Find the first occurrence of that weekday in this month.
+  const firstDay = new Date(Date.UTC(y, m - 1, 1));
+  const offset = (start.getUTCDay() - firstDay.getUTCDay() + 7) % 7;
+  const firstOccurrence = 1 + offset;
+
+  // Calculate the matching occurrence in this month.
+  const targetDay = firstOccurrence + (occurrence - 1) * 7;
+
+  // If the original was the last weekday of its month,
+  // use the last occurrence in each month instead.
+  const startDaysInMonth = new Date(Date.UTC(sy, sm, 0)).getUTCDate();
+  const startWasLast = sd + 7 > startDaysInMonth;
+
+  if (startWasLast) {
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const lastDay = daysInMonth -
+      ((new Date(Date.UTC(y, m - 1, daysInMonth)).getUTCDay() -
+        start.getUTCDay() + 7) % 7);
+
+    return d === lastDay;
+  }
+
+  return d === targetDay;
+}
+
+// Shared recurrence logic for calendar highlighting and day selection.
+//
+// Existing event array fields:
+// event[0] = event ID
+// event[3] = start date/time
+// event[6] = recurring flag
+// event[7] = recurrence type
+// event[8] = recurrence end date
+function eventOccursOnDate(event, dateKey) {
+  const startDate = event[3]?.slice(0, 10);
+
+  if (!startDate || dateKey < startDate) {
+    return false;
+  }
+
+  // A non-recurring event occurs only on its original date.
+  if (!event[6]) {
+    return dateKey === startDate;
+  }
+
+  const recurrenceType = String(event[7] || "").toLowerCase();
+  const endDate = event[8]?.slice(0, 10);
+
+  // Recurring events need an end date and cannot occur after it.
+  if (!endDate || dateKey > endDate) {
+    return false;
+  }
+
+  const [startYear, startMonth, startDay] =
+    startDate.split("-").map(Number);
+
+  const [year, month, day] =
+    dateKey.split("-").map(Number);
+
+  const startTimestamp = Date.UTC(
+    startYear,
+    startMonth - 1,
+    startDay
+  );
+
+  const selectedTimestamp = Date.UTC(
+    year,
+    month - 1,
+    day
+  );
+
+  const daysSinceStart =
+    (selectedTimestamp - startTimestamp) / 86400000;
+
+  if (recurrenceType === "daily") {
+    return true;
+  }
+
+  if (recurrenceType === "weekly") {
+    return daysSinceStart % 7 === 0;
+  }
+
+  // New monthly recurrence types, plus compatibility with
+  // events already stored with recurrence_type = "monthly".
+  if (
+    recurrenceType === "monthly_date" ||
+    recurrenceType === "monthly"
+  ) {
+    // Repeat on the same calendar date.
+    // If that date does not exist, use the last day of the month.
+    const daysInMonth = new Date(
+      Date.UTC(year, month, 0)
+    ).getUTCDate();
+
+    return day === Math.min(startDay, daysInMonth);
+  }
+
+  if (recurrenceType === "monthly_weekday") {
+    // Repeat on the same ordinal weekday as the original start date.
+    return matchesMonthlyWeekday(dateKey, startDate);
+  }
+
+  return false;
+}
 
 export default function Dashboard({
   organizationId,
@@ -27,18 +149,27 @@ export default function Dashboard({
   const [eventsError, setEventsError] = useState(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const [showMyEvents, setShowMyEvents] = useState(false);
+  const [showEventRequests, setShowEventRequests] = useState(false);
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
   useEffect(() => {
-    if (!organizationId) return;
+    if (!organizationId) {
+      setEvents([]);
+      setSelectedDayEvents([]);
+      setEventsError(null);
+      setEventsLoading(false);
+      return;
+    }
 
     const controller = new AbortController();
 
-    const fetchEvents = async () => {
+    async function fetchEvents() {
       setEvents([]);
+      setSelectedDayEvents([]);
       setEventsLoading(true);
       setEventsError(null);
 
@@ -47,12 +178,14 @@ export default function Dashboard({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/events/${organizationId}/${month}/${year}`,
+          `http://localhost:8000/events/approved/${organizationId}/${month}/${year}`,
           { signal: controller.signal }
         );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch events: ${response.status}`);
+          throw new Error(
+            `Failed to fetch events: ${response.status}`
+          );
         }
 
         const data = await response.json();
@@ -68,41 +201,54 @@ export default function Dashboard({
           setEventsLoading(false);
         }
       }
-    };
+    }
 
     fetchEvents();
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [organizationId, currentMonth]);
 
-const eventDates = [
-  ...new Set(
-    events
-      .map((event) => event[3]?.slice(0, 10))
-      .filter(Boolean)
-  ),
-]
+  // Generate the date keys for the current month.
+  // A date is highlighted if at least one event occurs on it.
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-function handleDayClick(date) {
-  if (!date) {
-    setSelectedDayEvents([]);
-    return;
+  const eventDates = Array.from(
+    { length: daysInMonth },
+    (_, index) => {
+      const day = index + 1;
+
+      return [
+        year,
+        String(month + 1).padStart(2, "0"),
+        String(day).padStart(2, "0"),
+      ].join("-");
+    }
+  ).filter((dateKey) =>
+    events.some((event) =>
+      eventOccursOnDate(event, dateKey)
+    )
+  );
+
+  function handleDayClick(date) {
+    if (!date) {
+      setSelectedDayEvents([]);
+      return;
+    }
+
+    const selectedDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    const matchingEvents = events.filter((event) =>
+      eventOccursOnDate(event, selectedDate)
+    );
+
+    setSelectedDayEvents(matchingEvents);
   }
-
-  const selectedDate = [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-
-  const matchingEvents = events.filter((event) => {
-    return event[3]?.slice(0, 10) === selectedDate;
-  });
-
-  setSelectedDayEvents(matchingEvents);
-}
 
   return (
     <div className="app-layout">
@@ -111,10 +257,13 @@ function handleDayClick(date) {
           logout={logout}
           onAddUser={() => setShowRegister(true)}
           onAddVenue={() => setShowAddVenue(true)}
+          onEventRequests={() => setShowEventRequests(true)}
         />
       )}
 
-      {accountType === 2 && <StaffSidebar logout={logout} />}
+      {accountType === 2 && (
+        <StaffSidebar logout={logout} />
+      )}
 
       {accountType === 3 && (
         <GuestSidebar
@@ -131,22 +280,24 @@ function handleDayClick(date) {
 
         <section className="dashboard-content">
           <div className="dashboard-left">
-
-          <Calendar
-            currentMonth={currentMonth}
-            onMonthChange={setCurrentMonth}
-            onDayClick={handleDayClick}
-            eventDates={eventDates}
-          />
+            <Calendar
+              currentMonth={currentMonth}
+              onMonthChange={setCurrentMonth}
+              onDayClick={handleDayClick}
+              eventDates={eventDates}
+            />
 
             <UpcomingEvents />
           </div>
 
-          <EventTable selectedDayEvents={selectedDayEvents} />
+          <EventTable
+            selectedDayEvents={selectedDayEvents}
+          />
         </section>
 
-        {/* Events are stored in state and ready for future use */}
-        {eventsError && <p role="alert">{eventsError}</p>}
+        {eventsError && (
+          <p role="alert">{eventsError}</p>
+        )}
       </main>
 
       {/* Register User Modal */}
@@ -235,9 +386,39 @@ function handleDayClick(date) {
             <MyEvents
               userId={userId}
               onClose={() => setShowMyEvents(false)}
-              onRequestCancelled={(event) => {
-                console.log("Event cancellation requested:", event);
+              onRequestCancelled={(cancelledEvent) => {
+                const cancelledId = cancelledEvent.event_id;
+
+                setEvents((previous) =>
+                  previous.filter(
+                    (event) => event[0] !== cancelledId
+                  )
+                );
+
+                setSelectedDayEvents((previous) =>
+                  previous.filter(
+                    (event) => event[0] !== cancelledId
+                  )
+                );
               }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Event Requests Modal — Admin only */}
+      {accountType === 1 && showEventRequests && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowEventRequests(false)}
+        >
+          <div
+            className="modal-content event-requests-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <EventRequests
+              organizationId={organizationId}
+              onClose={() => setShowEventRequests(false)}
             />
           </div>
         </div>
