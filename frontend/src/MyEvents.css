@@ -404,3 +404,25 @@
 .my-requests-table td {
   white-space: pre-line;
 }
+
+
+.my-requests-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.my-requests-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.my-requests-table th,
+.my-requests-table td {
+  white-space: nowrap;
+  padding: 12px 16px;
+}

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body
 from database import get_db_connection
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel, Field
+from datetime import datetime, date
 from typing import Optional
 import json
 
@@ -78,6 +78,13 @@ def deny_event(curs, req_id, d_reason):
         WHERE id = %s
     """, (DENIED, d_reason, req_id,))
 
+def cancel_event(curs, event_id):
+    curs.execute("""
+        UPDATE events
+        SET request_status_id = %s,
+        WHERE id = %s
+    """, (CANCELLED, event_id,))
+
 # Update inventory after approving event request.
 # Check event space's chair and table counts and compare these to the
 # requested amounts. If more are requested than are in there, then
@@ -119,23 +126,61 @@ def update_inventory(curs, chair_diff, table_diff):
     """, (chair_diff, chair_diff, table_diff, table_diff))
 
 
-# Manually approve/deny/cancel event
-@router.patch("/events/process/{status}/{req_id}")
-def manual_process_event_request(status: int, req_id: int):
+# Manually approve event
+@router.patch("/events/approve/{req_id}")
+def manual_process_event_request(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
+
     try:
-        cursor.execute( """
-            UPDATE events
-            SET request_status_id = %s
-            WHERE id = %s
-        """, (status, req_id))
+        approve_event(cursor, req_id)
         connection.commit()
+        return {"message":"Event request approved."}
     except Exception:
         connection.rollback()
         raise
-    cursor.close()
-    connection.close()
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Cancel a pending/approved event
+@router.patch("/events/cancel/{req_id}")
+def manual_process_event_request(req_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cancel_event(cursor, req_id)
+        connection.commit()
+        return {"message":"Event cancelled."}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Manually deny event
+class DenialReason(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+
+@router.patch("/events/deny/{req_id}")
+def manual_process_event_request(req_id: int, data: DenialReason):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        deny_event(cursor, req_id, data.reason)
+        connection.commit()
+        return {"message":"Event request denied."}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
 
 
 # Auto-approve/deny event request
@@ -306,20 +351,21 @@ def get_events(org_id: int, month: int, year: int):
         cursor.close()
         connection.close()
 
-# Get all approved events requested by a specific user
-@router.get("/events/user/{user_id}")
-def get_pending_requests(user_id: int):
+# Get all pending/approved events requested by a specific user
+@router.get("/events/user/{user_id}/{current_date}")
+def get_pending_requests(user_id: int, current_date: date):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
         cursor.execute("""
-            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.date_approved
+            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.is_recurring, E.recurrence_type, E.recurrence_end_date, E.date_approved
             FROM events E
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id
             WHERE E.requesting_user_id = %s
-            AND E.request_status_id = %s
-        """, (user_id, APPROVED))
+            AND E.request_status_id IN %s
+            AND E.end_time::date >= %s
+        """, (user_id, (APPROVED, PENDING), current_date))
         rows = cursor.fetchall()
         return rows
     except Exception:

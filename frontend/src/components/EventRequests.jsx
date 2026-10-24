@@ -61,6 +61,8 @@ export default function EventRequests({ organizationId, onClose }) {
   const [processingId, setProcessingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [denialRequest, setDenialRequest] = useState(null);
+  const [denialReason, setDenialReason] = useState("");
 
   const fetchRequests = useCallback(async () => {
     if (!organizationId) {
@@ -102,70 +104,85 @@ export default function EventRequests({ organizationId, onClose }) {
     fetchRequests();
   }, [fetchRequests]);
 
-  async function processRequest(reqId, action) {
+
+    async function processRequest(reqId, action, reason = "") {
     if (processingId !== null) return;
 
     const actionLabels = {
-      approve: "approve",
-      deny: "deny",
-      auto: "automatically process",
+        approve: "approve",
+        deny: "deny",
+        auto: "automatically process",
+        cancel: "cancel",
     };
-
-    if (
-      action === "deny" &&
-      !window.confirm("Are you sure you want to deny this event request?")
-    ) {
-      return;
-    }
 
     setProcessingId(reqId);
     setError("");
     setMessage("");
 
     try {
-      let response;
+        let response;
 
-      if (action === "approve" || action === "deny") {
-        const status = action === "approve" ? 1 : 2;
+        if (["approve", "deny", "cancel"].includes(action)) {
+        const endpoint = `${API_URL}/events/${action}/${encodeURIComponent(reqId)}`;
 
-        response = await fetch(
-          `${API_URL}/events/process/${status}/${encodeURIComponent(reqId)}`,
-          {
+        const options = {
             method: "PATCH",
             credentials: "include",
-          }
-        );
-      } else {
+            headers: {},
+        };
+
+        if (action === "deny") {
+            options.headers["Content-Type"] = "application/json";
+            options.body = JSON.stringify({
+            reason: reason.trim(),
+            });
+        }
+
+        response = await fetch(endpoint, options);
+        } else {
         response = await fetch(AUTO_PROCESS_URL(reqId), {
-          method: "POST",
-          credentials: "include",
+            method: "POST",
+            credentials: "include",
         });
-      }
+        }
 
-      const result = await response.json().catch(() => null);
+        const result = await response.json().catch(() => null);
 
-      if (!response.ok) {
+        if (!response.ok) {
         throw new Error(
-          result?.detail ||
-          result?.message ||
-          `Could not ${actionLabels[action]} request (${response.status}).`
+            result?.detail ||
+            result?.message ||
+            `Could not ${actionLabels[action]} request (${response.status}).`
         );
-      }
+        }
 
-      setMessage(
+        setMessage(
         result?.message ||
-        `Request ${action === "auto" ? "processed automatically" : `${action}d`} successfully.`
-      );
+            `Request ${
+            action === "auto"
+                ? "processed automatically"
+                : action === "deny"
+                ? "denied"
+                : action === "cancel"
+                    ? "cancelled"
+                    : "approved"
+            } successfully.`
+        );
 
-      // Reload the pending list so completed requests disappear.
-      await fetchRequests();
+        if (action === "deny") {
+        setDenialRequest(null);
+        setDenialReason("");
+        }
+
+        // Reload pending requests so completed requests disappear.
+        await fetchRequests();
     } catch (err) {
-      console.error("Error processing event request:", err);
-      setError(err.message || "An unexpected error occurred.");
+        console.error("Error processing event request:", err);
+        setError(err.message || "An unexpected error occurred.");
     } finally {
-      setProcessingId(null);
+        setProcessingId(null);
     }
-  }
+    }
 
   return (
     <main className="event-requests-page">
@@ -270,12 +287,20 @@ export default function EventRequests({ organizationId, onClose }) {
                           </button>
 
                           <button
-                            type="button"
-                            className="event-action-btn event-action-deny"
-                            disabled={anyBusy}
-                            onClick={() => processRequest(request.id, "deny")}
+                          type="button"
+                          className="event-action-btn event-action-deny"
+                          disabled={anyBusy}
+                          onClick={() => {
+                              setDenialRequest({
+                              id: request.id,
+                              title: request.title,
+                              });
+                              setDenialReason("");
+                              setError("");
+                              setMessage("");
+                          }}
                           >
-                            Deny
+                          Deny
                           </button>
 
                           <button
@@ -314,6 +339,98 @@ export default function EventRequests({ organizationId, onClose }) {
             </button>
         </footer>
         )}
+
+        {denialRequest && (
+        <div
+            className="denial-modal-overlay"
+            onMouseDown={(event) => {
+            if (event.target === event.currentTarget && processingId === null) {
+                setDenialRequest(null);
+                setDenialReason("");
+            }
+            }}
+        >
+            <section
+            className="denial-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="denial-modal-title"
+            >
+            <h2 id="denial-modal-title">Deny Event Request</h2>
+
+            <p>
+                Please provide a reason for denying
+                {" "}
+                <strong>{denialRequest.title}</strong>.
+            </p>
+
+            <form
+                onSubmit={(event) => {
+                event.preventDefault();
+
+                if (!denialReason.trim() || processingId !== null) {
+                    return;
+                }
+
+                processRequest(
+                    denialRequest.id,
+                    "deny",
+                    denialReason
+                );
+                }}
+            >
+                <label htmlFor="denial-reason">
+                Reason for denial
+                </label>
+
+                <textarea
+                id="denial-reason"
+                value={denialReason}
+                onChange={(event) => setDenialReason(event.target.value)}
+                placeholder="Explain why this event request is being denied..."
+                rows={4}
+                required
+                maxLength={1000}
+                disabled={processingId !== null}
+                />
+
+                {error && (
+                <p className="event-requests-error" role="alert">
+                    {error}
+                </p>
+                )}
+
+                <div className="denial-modal-actions">
+                <button
+                    type="button"
+                    className="event-requests-refresh"
+                    disabled={processingId !== null}
+                    onClick={() => {
+                    setDenialRequest(null);
+                    setDenialReason("");
+                    setError("");
+                    }}
+                >
+                    Back
+                </button>
+
+                <button
+                    type="submit"
+                    className="event-action-btn event-action-deny"
+                    disabled={
+                    processingId !== null || !denialReason.trim()
+                    }
+                >
+                    {processingId === denialRequest.id
+                    ? "Submitting..."
+                    : "Submit Denial"}
+                </button>
+                </div>
+            </form>
+            </section>
+        </div>
+        )}
+
       </section>
     </main>
   );

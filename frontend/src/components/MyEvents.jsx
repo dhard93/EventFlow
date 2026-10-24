@@ -2,8 +2,10 @@
 import { useCallback, useEffect, useState } from "react";
 import "../MyEvents.css";
 
-const EVENTS_URL = (userId) =>
-  `http://localhost:8000/events/user/${userId}`;
+const EVENTS_URL = (userId) => {
+  const currentDate = new Date().toLocaleDateString("en-CA");
+  return `http://localhost:8000/events/user/${userId}/${currentDate}`;
+};
 
 const CANCEL_EVENT_URL = (eventId) =>
   `http://localhost:8000/events/process/4/${eventId}`;
@@ -14,6 +16,9 @@ const COLUMNS = [
   { key: "space", label: "Space" },
   { key: "start_time", label: "Start time" },
   { key: "end_time", label: "End time" },
+  { key: "recurring", label: "Recurring" },
+  { key: "recurrence_type", label: "Recurrence" },
+  { key: "recurrence_end_date", label: "Recurrence Ends" },
   { key: "date_approved", label: "Approved at" },
 ];
 
@@ -26,15 +31,28 @@ function normalizeEvent(row) {
       space: row[3],
       start_time: row[4],
       end_time: row[5],
-      date_approved: row[6],
+      is_recurring: row[6],
+      recurrence_type: row[7],
+      recurrence_end_date: row[8],
+      date_approved: row[9],
+      recurring: row[6] ? "Yes" : "No",
     };
   }
+
+  const isRecurring = row.is_recurring;
 
   return {
     ...row,
     event_id: row.event_id ?? row.id,
     venue: row.venue ?? row.name,
     space: row.space ?? row.space_name,
+    recurring: isRecurring ? "Yes" : "No",
+    recurrence_type: isRecurring
+      ? row.recurrence_type || "—"
+      : "—",
+    recurrence_end_date: isRecurring
+      ? row.recurrence_end_date
+      : null,
   };
 }
 
@@ -46,14 +64,18 @@ function formatValue(value) {
   const date = new Date(value);
 
   if (!Number.isNaN(date.getTime())) {
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }) + "\n" + date.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return (
+      date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }) +
+      "\n" +
+      date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    );
   }
 
   return String(value);
@@ -116,7 +138,6 @@ export default function MyEvents({
     return () => controller.abort();
   }, [loadEvents]);
 
-
   async function handleCancel(row) {
     const eventId = row.event_id;
 
@@ -163,25 +184,18 @@ export default function MyEvents({
       }
 
       setEvents((previous) =>
-        previous.filter(
-          (item) => item.event_id !== eventId
-        )
+        previous.filter((item) => item.event_id !== eventId)
       );
 
-      setMessage(
-        `"${row.title}" was cancelled successfully.`
-      );
+      setMessage(`"${row.title}" was cancelled successfully.`);
 
       onRequestCancelled?.(row);
     } catch (err) {
-      setError(
-        err.message || "Failed to cancel the event."
-      );
+      setError(err.message || "Failed to cancel the event.");
     } finally {
       setCancellingId(null);
     }
   }
-
 
   return (
     <div
@@ -255,11 +269,18 @@ export default function MyEvents({
                 <tbody>
                   {events.map((row, index) => (
                     <tr key={row.event_id ?? index}>
-                      {COLUMNS.map((column) => (
-                        <td key={column.key}>
-                          {formatValue(row[column.key])}
-                        </td>
-                      ))}
+                      {COLUMNS.map((column) => {
+                        const value = row[column.key];
+
+                        return (
+                          <td key={column.key}>
+                            {column.key === "recurrence_end_date" &&
+                            !row.is_recurring
+                              ? "—"
+                              : formatValue(value)}
+                          </td>
+                        );
+                      })}
 
                       <td className="my-requests-actions">
                         <button

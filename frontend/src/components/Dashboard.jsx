@@ -12,6 +12,14 @@ import RequestEvent from './RequestEvent';
 import MyEvents from "./MyEvents";
 import EventRequests from "./EventRequests";
 
+// TODO //
+// Notifications
+// Add additional info the event table entries
+// Messaging
+// My Account
+// My Organization
+// Analytics
+
 // Determines whether a date is the same ordinal weekday as the
 // original start date, e.g. the first Monday or last Friday.
 function matchesMonthlyWeekday(dateKey, startDate) {
@@ -150,9 +158,8 @@ export default function Dashboard({
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const [showMyEvents, setShowMyEvents] = useState(false);
   const [showEventRequests, setShowEventRequests] = useState(false);
-
+  const [today] = useState(() => new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
-    const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
@@ -226,6 +233,11 @@ export default function Dashboard({
       ].join("-");
     }
   ).filter((dateKey) =>
+    dateKey >= [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-") &&
     events.some((event) =>
       eventOccursOnDate(event, dateKey)
     )
@@ -242,6 +254,17 @@ export default function Dashboard({
       String(date.getMonth() + 1).padStart(2, "0"),
       String(date.getDate()).padStart(2, "0"),
     ].join("-");
+
+    const todayKey = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    if (selectedDate < todayKey) {
+      setSelectedDayEvents([]);
+      return;
+    }
 
     const matchingEvents = events.filter((event) =>
       eventOccursOnDate(event, selectedDate)
