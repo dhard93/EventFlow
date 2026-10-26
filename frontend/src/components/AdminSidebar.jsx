@@ -1,11 +1,11 @@
 export default function AdminSidebar({
   logout,
+  onMyAccount,
   onAddUser,
   onAddVenue,
-  onEventRequests
+  onEventRequests,
+  hasUnreadNotifications
 }) {
-  const unreadMessageCount = 0;
-  const hasUnreadNotifications = false;
 
   return (
     <aside className="sidebar">
@@ -24,7 +24,14 @@ export default function AdminSidebar({
           <span className="active-indicator" />
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onMyAccount();
+          }}
+        >
           <span className="nav-icon">◉</span>
           <span>My Account</span>
         </a>
@@ -64,11 +71,6 @@ export default function AdminSidebar({
         <a href="#" className="nav-link">
           <span className="nav-icon">✉</span>
           <span>Messages</span>
-          {unreadMessageCount > 0 && (
-            <span className="nav-badge">
-              {unreadMessageCount}
-            </span>
-          )}
         </a>
 
         <a href="#" className="nav-link">

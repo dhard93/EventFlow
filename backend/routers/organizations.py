@@ -22,8 +22,7 @@ def get_user_org_name(user_id: int):
     return row
 
 
-# TODO #
-# Create function for checking if email already exists
+# Create a new organization and administrator
 class CreateOrg(BaseModel):
     organization_name: str
     email: str
@@ -81,37 +80,53 @@ def add_org(data: CreateOrg, response: Response):
     except Exception:
         connection.rollback()
         raise
-
     finally:
         cursor.close()
         connection.close()
 
+
+# Modify organization name
+class NewOrgData(BaseModel):
+    org_id: int
+    new_name: str
+
 @router.patch("/organizations")
-def set_org_name(data: dict = Body(...)):
+def set_org_name(data: NewOrgData):
     connection = get_db_connection()
     cursor = connection.cursor()
-    query = """
-            UPDATE organizations
-            SET name = %s
-            WHERE id = %s
-        """
-    cursor.execute(
-        query, (
-            data["name"],
-            data["id"]
-        )
-    )
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return {"message": "Organization name successfully changed."}
 
-@router.delete("/organizations")
+    try:
+        cursor.execute("""
+                UPDATE organizations
+                SET name = %s
+                WHERE id = %s
+            """, (data.new_name, data.org_id)
+        )
+        connection.commit()
+        return {"message": "Organization name successfully changed."}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Delete organization
+@router.delete("/organizations/{org_id}")
 def delete_org(org_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM organizations WHERE id = %s", (org_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return {"messgage": "Organization has beed deleted."}
+    try:
+        cursor.execute("""
+            DELETE FROM organizations
+            WHERE id = %s
+        """, (data.org_id,))
+        connection.commit()
+        return {"message": "Organization has beed deleted."}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()

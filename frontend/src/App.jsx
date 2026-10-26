@@ -10,14 +10,46 @@ export default function App() {
   const [organizationId, setOrganizationId] = useState(null);
   const [organizationName, setOrganizationName] = useState("");
   const [accountType, setAccountType] = useState(null);
+  const [adminId, setAdminId] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  
+  async function fetchUnreadNotifications(userId) {
+    if (!userId) {
+      setHasUnreadNotifications(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/notifications/unread/${userId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch unread notifications.");
+      }
+
+      const notifications = await response.json();
+
+      setHasUnreadNotifications(
+        Array.isArray(notifications) && notifications.length > 0
+      );
+    } catch (error) {
+      console.error("Failed to fetch unread notifications:", error);
+      setHasUnreadNotifications(false);
+    }
+  }
 
   // Restore the login session whenever the app first loads.
   useEffect(() => {
     async function restoreSession() {
       try {
         const response = await fetch(
-          "http://localhost:8000/users/me",
+          "http://localhost:8000/users/sessions/me",
           {
             method: "GET",
             credentials: "include",
@@ -37,6 +69,10 @@ export default function App() {
         setOrganizationId(user.organization_id);
         setOrganizationName(user.organization_name);
         setAccountType(user.account_type);
+        setAdminId(user.admin_id);
+
+        await fetchUnreadNotifications(user.user_id);
+
         setPage("dashboard");
       } catch (error) {
         console.error("Session restoration failed:", error);
@@ -70,8 +106,11 @@ export default function App() {
         return;
       }
 
+    setUserId(null);
+    setOrganizationId(null);
     setOrganizationName("");
     setAccountType(null);
+    setAdminId(null);
     setPage("login");
 
     } catch (err) {
@@ -95,6 +134,7 @@ export default function App() {
           setAccountType(data.account_type);
           setUserId(data.user_id);
           setOrganizationId(data.organization_id);
+          setAdminId(user.admin_id);
           setPage("dashboard");
         }}
       />
@@ -119,6 +159,8 @@ export default function App() {
         userId={userId}
         organizationName={organizationName}
         accountType={accountType}
+        adminId={adminId}
+        hasUnreadNotifications={hasUnreadNotifications}
         logout={logout}
       />
     );
@@ -126,11 +168,15 @@ export default function App() {
 
   return (
     <Login
-      onLogin={(user) => {
+      onLogin={async (user) => {
         setOrganizationName(user.organization_name);
         setAccountType(user.account_type);
         setUserId(user.user_id);
         setOrganizationId(user.organization_id);
+        setAdminId(user.admin_id);
+
+        await fetchUnreadNotifications(user.user_id);
+
         setPage("dashboard");
       }}
       onCreateOrganizationClick={() => setPage("register-org")}

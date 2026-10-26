@@ -32,15 +32,6 @@ export default function EventTable({ selectedDayEvents = [] }) {
         </span>
       </div>
 
-      <div className="events-toolbar">
-        <input
-          type="search"
-          className="events-search"
-          placeholder="Search events..."
-          aria-label="Search scheduled events"
-        />
-      </div>
-
       {selectedDayEvents.length === 0 ? (
         <p className="events-empty">
           Select a date with scheduled events to view them.

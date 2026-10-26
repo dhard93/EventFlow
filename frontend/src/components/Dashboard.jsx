@@ -11,17 +11,27 @@ import AddVenue from './AddVenue';
 import RequestEvent from './RequestEvent';
 import MyEvents from "./MyEvents";
 import EventRequests from "./EventRequests";
+import MyAccount from "./MyAccount";
 
 // TODO //
-// Notifications
-// Add additional info the event table entries
+//
+// Notifications component
+//
+// Rework tables with cascading foreign keys so that organizations,
+// venues, users, etc. can be deleted easily.
+//
+// Add check to see if email already exists when creating account
+//
+// Add additional info to event table entries (horizontal scroll)
+//
 // Messaging
-// My Account
+//
 // My Organization
+//
 // Analytics
+//
+// Test auto approve/deny
 
-// Determines whether a date is the same ordinal weekday as the
-// original start date, e.g. the first Monday or last Friday.
 function matchesMonthlyWeekday(dateKey, startDate) {
   const [sy, sm, sd] = startDate.split("-").map(Number);
   const [y, m, d] = dateKey.split("-").map(Number);
@@ -62,14 +72,6 @@ function matchesMonthlyWeekday(dateKey, startDate) {
   return d === targetDay;
 }
 
-// Shared recurrence logic for calendar highlighting and day selection.
-//
-// Existing event array fields:
-// event[0] = event ID
-// event[3] = start date/time
-// event[6] = recurring flag
-// event[7] = recurrence type
-// event[8] = recurrence end date
 function eventOccursOnDate(event, dateKey) {
   const startDate = event[3]?.slice(0, 10);
 
@@ -147,11 +149,14 @@ export default function Dashboard({
   userId,
   organizationName,
   accountType,
+  adminId,
+  hasUnreadNotifications,
   logout
 }) {
   const [showRegister, setShowRegister] = useState(false);
   const [showAddVenue, setShowAddVenue] = useState(false);
   const [showRequestEvent, setShowRequestEvent] = useState(false);
+  const [showMyAccount, setShowMyAccount] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState(null);
@@ -278,19 +283,26 @@ export default function Dashboard({
       {accountType === 1 && (
         <AdminSidebar
           logout={logout}
+          onMyAccount={() => setShowMyAccount(true)}
           onAddUser={() => setShowRegister(true)}
           onAddVenue={() => setShowAddVenue(true)}
           onEventRequests={() => setShowEventRequests(true)}
+          hasUnreadNotifications={hasUnreadNotifications}
         />
       )}
 
       {accountType === 2 && (
-        <StaffSidebar logout={logout} />
+        <StaffSidebar
+          logout={logout}
+          onMyAccount={() => setShowMyAccount(true)}
+        />
+        
       )}
 
       {accountType === 3 && (
         <GuestSidebar
           logout={logout}
+          onMyAccount={() => setShowMyAccount(true)}
           onRequestEvent={() => setShowRequestEvent(true)}
           onMyEvents={() => setShowMyEvents(true)}
         />
@@ -389,6 +401,7 @@ export default function Dashboard({
             <RequestEvent
               organizationId={organizationId}
               userId={userId}
+              adminId={adminId}
               onClose={() => setShowRequestEvent(false)}
               onRequest={() => setShowRequestEvent(false)}
             />
@@ -445,6 +458,15 @@ export default function Dashboard({
             />
           </div>
         </div>
+      )}
+
+      {/* My Account Modal */}
+      {showMyAccount && (
+        <MyAccount
+          organizationId={organizationId}
+          userId={userId}
+          onClose={() => setShowMyAccount(false)}
+        />
       )}
     </div>
   );

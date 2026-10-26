@@ -3,15 +3,7 @@ from database import get_db_connection
 from pydantic import BaseModel, Field
 from datetime import datetime, date
 from typing import Optional
-import json
-
-# Constants
-APPROVED = 1
-DENIED = 2
-PENDING = 3
-CANCELLED = 4
-CHAIR = 1
-TABLE = 2
+from constants import *
 
 router = APIRouter()
 
@@ -40,16 +32,15 @@ def check_capacity(curs, req_id):
     row = curs.fetchone()
     return row
 
+# Check if an event request's requested chair/table numbers exceed
+# the limits of the requested space's max chair/table numbers
 def check_resources(curs, req_id):
     curs.execute("""
         SELECT *
         FROM event_request_resources RR
         JOIN events E ON E.id = RR.request_id
         JOIN spaces S ON E.space_id = S.id
-        JOIN resource_inventory R
-        ON RR.resource_type_id = R.resource_type_id
         WHERE RR.request_id = %s
-        AND RR.quantity > R.available_quantity
         AND RR.quantity > CASE
             WHEN R.resource_type_id = %s THEN S.capacity
             WHEN R.resource_type_id = %s THEN S.table_max
@@ -84,46 +75,6 @@ def cancel_event(curs, event_id):
         SET request_status_id = %s,
         WHERE id = %s
     """, (CANCELLED, event_id,))
-
-# Update inventory after approving event request.
-# Check event space's chair and table counts and compare these to the
-# requested amounts. If more are requested than are in there, then
-# subtract the remainder from inventory and set the updated chair/table counts.
-def check_inventory_remainder(curs, req_id):
-    curs.execute("""
-        SELECT R.quantity - CASE
-            WHEN R.resource_type_id = %s THEN S.chair_count
-            WHEN R.resource_type_id = %s THEN S.table_count
-        END as Remainder
-        FROM event_request_resources R
-        JOIN events E ON E.id = R.request_id
-        JOIN spaces S ON E.space_id = S.id
-        WHERE E.id = %s
-    """, (CHAIR, TABLE, req_id))
-
-    chair_diff = None
-    table_diff = None
-    rows = curs.fetchall()
-    for row in rows:
-        if row[0] == CHAIR:
-            chair_diff = row[1]
-        elif row[0] == TABLE:
-            table_diff = row[1]
-
-    return chair_diff, table_diff
-
-def update_inventory(curs, chair_diff, table_diff):
-    curs.execute("""
-        UPDATE spaces AS S
-        SET chair_count = CASE
-            WHEN %s > 0 THEN chair_count - %s ELSE chair_count
-        END,
-        table_count = CASE
-            WHEN %s > 0 THEN table_count - %s ELSE table_count
-        END
-        FROM events E
-        WHERE E.space_id = S.id
-    """, (chair_diff, chair_diff, table_diff, table_diff))
 
 
 # Manually approve event
@@ -203,8 +154,7 @@ def auto_process_event_request(req_id: int):
             output = {"message":f"{denied_reason}"}
         else:
             approve_event(cursor, req_id)
-            chair_rem, table_rem = check_inventory_remainder(cursor, req_id)
-            update_inventory(cursor, chair_rem, table_rem)
+
         connection.commit()
     except Exception:
         connection.rollback()
@@ -223,6 +173,7 @@ class Resources(BaseModel):
     TVs: int = 0
 
 class EventData(BaseModel):
+    admin_id: int
     org_id: int
     venue_id: int
     space_id: int
@@ -248,7 +199,7 @@ def create_event_request(data: EventData):
             )
         VALUES
             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id
+        RETURNING id, title
     """
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -274,24 +225,36 @@ def create_event_request(data: EventData):
             )
         )
 
-        req_id = cursor.fetchone()[0]
-        resources = data.resources.model_dump()
+        req = cursor.fetchone()
 
-        for resource_type_id, (resource_name, quantity) in enumerate(
-            resources.items(), start=1):
+        # Insert row(s) into event resources table
+        resources = data.resources.model_dump()
+        for resource_type_id, quantity in enumerate(
+            resources.values(), start=1
+        ):
             if quantity > 0:
                 cursor.execute("""
                     INSERT INTO event_request_resources
                         (request_id, resource_type_id, quantity)
                     VALUES (%s, %s, %s)
-                """, (req_id, resource_type_id, quantity))
+                """, (req[0], resource_type_id, quantity))  
+
+        # Insert row into notification's table to notify the org's admin
+        cursor.execute("""
+            INSERT INTO notifications
+                (user_id, type_id, content)
+            VALUES
+                (%s, %s, %s)
+        """, (data.admin_id, REQ_RECEIVED, f"Event request received: {req[1]}"))
+        
         connection.commit()
+        return {"message": "Event request created"}
     except Exception:
         connection.rollback()
         raise
-    cursor.close()
-    connection.close()
-    return {"message": "Event request created"}
+    finally:
+        cursor.close()
+        connection.close()
 
 
 # Get all pending events for an organization

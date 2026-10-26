@@ -1,4 +1,7 @@
-export default function StaffSidebar({ logout }) {
+export default function StaffSidebar({
+  logout,
+  onMyAccount
+}) {
   const unreadMessageCount = 0;
   const hasUnreadNotifications = false;
 
@@ -19,7 +22,14 @@ export default function StaffSidebar({ logout }) {
           <span className="active-indicator" />
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onMyAccount();
+          }}
+        >
           <span className="nav-icon">◉</span>
           <span>My Account</span>
         </a>

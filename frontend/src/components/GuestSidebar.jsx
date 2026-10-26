@@ -1,6 +1,7 @@
 
 export default function GuestSidebar({
   logout,
+  onMyAccount,
   onRequestEvent,
   onMyEvents,
 }) {
@@ -26,7 +27,14 @@ export default function GuestSidebar({
           <span className="active-indicator" />
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onMyAccount();
+          }}
+        >
           <span className="nav-icon">◉</span>
           <span>My Account</span>
         </a>

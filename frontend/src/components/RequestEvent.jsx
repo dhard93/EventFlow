@@ -18,6 +18,7 @@ const RECURRENCE_OPTIONS = [
 export default function RequestEvent({
   organizationId,
   userId,
+  adminId,
   onClose,
   onRequest,
 }) {
@@ -74,7 +75,6 @@ export default function RequestEvent({
       setSpaceId("");
 
       try {
-        // TODO: Replace with your actual venues endpoint.
         const response = await fetch(
           `http://localhost:8000/venues/${organizationId}`,
           {
@@ -213,6 +213,7 @@ export default function RequestEvent({
             }
 
             const eventData = {
+                admin_id: Number(adminId),
                 org_id: Number(organizationId),
                 venue_id: Number(venueId),
                 space_id: Number(spaceId),
@@ -249,12 +250,19 @@ export default function RequestEvent({
             );
 
             if (!response.ok) {
-                const result = await response.json();
-                throw new Error(
-                    result.detail
-                        ? JSON.stringify(result.detail)
-                        : "Failed to submit event request."
-                );
+              const result = await response.json();
+
+              console.error("API error:", {
+                status: response.status,
+                response: result,
+                submittedData: eventData,
+              });
+
+              throw new Error(
+                typeof result.detail === "string"
+                  ? result.detail
+                  : JSON.stringify(result.detail ?? result)
+              );
             }
 
             setMessage("Event request submitted successfully.");

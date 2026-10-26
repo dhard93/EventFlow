@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import organizations, venues, spaces, users, resources, events, conversations, messages, notifications
+from routers import organizations, venues, spaces, users, events, conversations, messages, notifications
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -20,4 +20,3 @@ app.include_router(events.router)
 app.include_router(conversations.router)
 app.include_router(messages.router)
 app.include_router(notifications.router)
-app.include_router(resources.router)

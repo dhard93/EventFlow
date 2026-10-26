@@ -1,0 +1,22 @@
+# Event statuses
+APPROVED = 1
+DENIED = 2
+PENDING = 3
+CANCELLED = 4
+
+# Resources
+CHAIR = 1
+TABLE = 2
+
+# Notification Types
+REQ_RECEIVED = 0
+REQ_APPROVED = 1
+REQ_DENIED = 2
+EVENT_CANCELLED = 3
+MSG_RECEIVED = 4
+USER_ACCT_UPDATED = 5
+
+# User account types
+ADMIN = 1
+STAFF = 2
+GUEST = 3
