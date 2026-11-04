@@ -238,14 +238,6 @@ def create_event_request(data: EventData):
                         (request_id, resource_type_id, quantity)
                     VALUES (%s, %s, %s)
                 """, (req[0], resource_type_id, quantity))  
-
-        # Insert row into notification's table to notify the org's admin
-        cursor.execute("""
-            INSERT INTO notifications
-                (user_id, type_id, content)
-            VALUES
-                (%s, %s, %s)
-        """, (data.admin_id, REQ_RECEIVED, f"Event request received: {req[1]}"))
         
         connection.commit()
         return {"message": "Event request created"}
@@ -291,7 +283,9 @@ def get_events(org_id: int, month: int, year: int):
     event_date = datetime(year, month, 1)
     try:
         cursor.execute("""
-            SELECT E.title, V.name, S.name, E.start_time, E.end_time, E.description, E.is_recurring, E.recurrence_type, E.recurrence_end_date
+            SELECT E.title, V.name, S.name, E.start_time, E.end_time,
+            E.description, E.is_recurring, E.recurrence_type,
+            E.recurrence_end_date
             FROM events E
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id
@@ -315,13 +309,22 @@ def get_events(org_id: int, month: int, year: int):
         connection.close()
 
 # Get all pending/approved events requested by a specific user
+# TODO: Change 'My Events' so that instead of hitting this endpoint,
+#       the front end gets user's events from cached event data.
+#       This way past events that are still recurring will appear
+#       in 'My Events'.
+#       'Cancel Event' also needs to be able to remove recurring past events
+#       from the cached event data in addition to setting the status of the event
+#       so that it isn't returned anymore by monthly request.
 @router.get("/events/user/{user_id}/{current_date}")
 def get_pending_requests(user_id: int, current_date: date):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
         cursor.execute("""
-            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.is_recurring, E.recurrence_type, E.recurrence_end_date, E.date_approved
+            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time,
+                   E.is_recurring, E.recurrence_type, E.recurrence_end_date,
+                   E.date_approved
             FROM events E
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id

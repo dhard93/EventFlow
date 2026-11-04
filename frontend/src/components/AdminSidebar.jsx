@@ -4,7 +4,9 @@ export default function AdminSidebar({
   onAddUser,
   onAddVenue,
   onEventRequests,
-  hasUnreadNotifications
+  hasUnreadNotifications,
+  hasUnreadEventRequests,
+  onNotifications,
 }) {
 
   return (
@@ -51,6 +53,9 @@ export default function AdminSidebar({
         >
           <span className="nav-icon">▣</span>
           <span>Event Requests</span>
+          {hasUnreadEventRequests && (
+            <span className="notification-dot" />
+          )}
         </a>
 
         <a href="#" className="nav-link" onClick={onAddUser}>
@@ -68,12 +73,14 @@ export default function AdminSidebar({
           <span>Analytics</span>
         </a>
 
-        <a href="#" className="nav-link">
-          <span className="nav-icon">✉</span>
-          <span>Messages</span>
-        </a>
-
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onNotifications();
+          }}
+        >
           <span className="nav-icon">♧</span>
           <span>Notifications</span>
           {hasUnreadNotifications && (

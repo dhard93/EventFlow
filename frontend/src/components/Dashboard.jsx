@@ -5,13 +5,14 @@ import StaffSidebar from "./StaffSidebar";
 import GuestSidebar from "./GuestSidebar";
 import Calendar from './Calender';
 import EventTable from "./EventTable";
-import UpcomingEvents from './UpcomingEvents';
+import Conversations from './Conversations';
 import RegisterUser from './RegisterUser';
 import AddVenue from './AddVenue';
 import RequestEvent from './RequestEvent';
 import MyEvents from "./MyEvents";
 import EventRequests from "./EventRequests";
 import MyAccount from "./MyAccount";
+import Notifications from "./Notifications";
 
 // TODO //
 //
@@ -59,6 +60,8 @@ function matchesMonthlyWeekday(dateKey, startDate) {
   // use the last occurrence in each month instead.
   const startDaysInMonth = new Date(Date.UTC(sy, sm, 0)).getUTCDate();
   const startWasLast = sd + 7 > startDaysInMonth;
+
+  const [showNotifications, setShowNotifications] = useState(false);
 
   if (startWasLast) {
     const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
@@ -151,6 +154,9 @@ export default function Dashboard({
   accountType,
   adminId,
   hasUnreadNotifications,
+  hasUnreadEventRequests,
+  onEventRequestsChange,
+  onNotificationsChange,
   logout
 }) {
   const [showRegister, setShowRegister] = useState(false);
@@ -163,6 +169,7 @@ export default function Dashboard({
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const [showMyEvents, setShowMyEvents] = useState(false);
   const [showEventRequests, setShowEventRequests] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [today] = useState(() => new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -288,6 +295,8 @@ export default function Dashboard({
           onAddVenue={() => setShowAddVenue(true)}
           onEventRequests={() => setShowEventRequests(true)}
           hasUnreadNotifications={hasUnreadNotifications}
+          hasUnreadEventRequests={hasUnreadEventRequests}
+          onNotifications={() => setShowNotifications(true)}
         />
       )}
 
@@ -295,6 +304,7 @@ export default function Dashboard({
         <StaffSidebar
           logout={logout}
           onMyAccount={() => setShowMyAccount(true)}
+          onNotifications={() => setShowNotifications(true)}
         />
         
       )}
@@ -305,6 +315,7 @@ export default function Dashboard({
           onMyAccount={() => setShowMyAccount(true)}
           onRequestEvent={() => setShowRequestEvent(true)}
           onMyEvents={() => setShowMyEvents(true)}
+          onNotifications={() => setShowNotifications(true)}  
         />
       )}
 
@@ -322,7 +333,7 @@ export default function Dashboard({
               eventDates={eventDates}
             />
 
-            <UpcomingEvents />
+            <Conversations />
           </div>
 
           <EventTable
@@ -455,6 +466,7 @@ export default function Dashboard({
             <EventRequests
               organizationId={organizationId}
               onClose={() => setShowEventRequests(false)}
+              onPendingRequestsChange={onEventRequestsChange}
             />
           </div>
         </div>
@@ -466,6 +478,15 @@ export default function Dashboard({
           organizationId={organizationId}
           userId={userId}
           onClose={() => setShowMyAccount(false)}
+        />
+      )}
+
+      {/* Notifications Modal — Admin only */}
+      {accountType === 1 && showNotifications && (
+        <Notifications
+          userId={userId}
+          onClose={() => setShowNotifications(false)}
+          onNotificationsChange={onNotificationsChange}
         />
       )}
     </div>

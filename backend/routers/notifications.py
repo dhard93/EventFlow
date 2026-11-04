@@ -35,6 +35,8 @@ def add_notification(data: NotificationData):
 
 
 # Get all unread notifications for a user
+# TODO: Change to also return id for each unread notification
+#       in order to use with marking as read
 @router.get("/notifications/unread/{user_id}")
 def get_unread_notifications(user_id: int):
     connection = get_db_connection()
@@ -42,7 +44,7 @@ def get_unread_notifications(user_id: int):
 
     try:
         cursor.execute("""
-            SELECT content
+            SELECT id, type_id, content
             FROM notifications
             WHERE user_id = %s
             AND has_read = %s
@@ -50,6 +52,29 @@ def get_unread_notifications(user_id: int):
         """, (user_id, False))
         rows = cursor.fetchall()
         return rows
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Mark a notification as read
+# TODO: implement this in dashboard
+@router.patch("/notifications/read/{n_id}")
+def mark_notification(n_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            UPDATE notifications
+            SET has_read = %s
+            WHERE id = %s
+        """, (True, n_id))
+        connection.commit()
+        return {"message":"Notification read"}
     except Exception:
         connection.rollback()
         raise

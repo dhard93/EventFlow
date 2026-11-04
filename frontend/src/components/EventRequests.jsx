@@ -55,7 +55,7 @@ function getRequest(row) {
   };
 }
 
-export default function EventRequests({ organizationId, onClose }) {
+export default function EventRequests({ organizationId, onClose, onPendingRequestsChange }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
@@ -92,6 +92,9 @@ export default function EventRequests({ organizationId, onClose }) {
       }
 
       setRequests(data);
+
+      // Update the sidebar indicator based on remaining pending requests.
+      onPendingRequestsChange?.(data.length > 0);
     } catch (err) {
       console.error("Error loading event requests:", err);
       setError(err.message || "Unable to load event requests.");

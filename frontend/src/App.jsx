@@ -13,6 +13,33 @@ export default function App() {
   const [adminId, setAdminId] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [hasUnreadEventRequests, setHasUnreadEventRequests] = useState(false);
+
+  async function fetchPendingEventRequests(organizationId) {
+    if (!organizationId) {
+      setHasUnreadEventRequests(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/events/pending/${organizationId}`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch pending event requests.");
+      }
+
+      const requests = await response.json();
+
+      setHasUnreadEventRequests(
+        Array.isArray(requests) && requests.length > 0
+      );
+    } catch (error) {
+      console.error("Failed to fetch pending event requests:", error);
+    }
+  }
   
   async function fetchUnreadNotifications(userId) {
     if (!userId) {
@@ -35,8 +62,12 @@ export default function App() {
 
       const notifications = await response.json();
 
+      const unreadNotifications = Array.isArray(notifications)
+        ? notifications
+        : [];
+
       setHasUnreadNotifications(
-        Array.isArray(notifications) && notifications.length > 0
+        unreadNotifications.length > 0
       );
     } catch (error) {
       console.error("Failed to fetch unread notifications:", error);
@@ -72,6 +103,10 @@ export default function App() {
         setAdminId(user.admin_id);
 
         await fetchUnreadNotifications(user.user_id);
+
+        if (user.account_type === 1) {
+          await fetchPendingEventRequests(user.organization_id);
+        }
 
         setPage("dashboard");
       } catch (error) {
@@ -161,6 +196,9 @@ export default function App() {
         accountType={accountType}
         adminId={adminId}
         hasUnreadNotifications={hasUnreadNotifications}
+        hasUnreadEventRequests={hasUnreadEventRequests}
+        onEventRequestsChange={setHasUnreadEventRequests}
+        onNotificationsChange={setHasUnreadNotifications}
         logout={logout}
       />
     );
@@ -176,6 +214,10 @@ export default function App() {
         setAdminId(user.admin_id);
 
         await fetchUnreadNotifications(user.user_id);
+
+        if (user.account_type === 1) {
+          await fetchPendingEventRequests(user.organization_id);
+        }
 
         setPage("dashboard");
       }}

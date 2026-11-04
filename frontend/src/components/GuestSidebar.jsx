@@ -64,16 +64,6 @@ export default function GuestSidebar({
         </a>
 
         <a href="#" className="nav-link">
-          <span className="nav-icon">✉</span>
-          <span>Messages</span>
-          {unreadMessageCount > 0 && (
-            <span className="nav-badge">
-              {unreadMessageCount}
-            </span>
-          )}
-        </a>
-
-        <a href="#" className="nav-link">
           <span className="nav-icon">♧</span>
           <span>Notifications</span>
           {hasUnreadNotifications && (
