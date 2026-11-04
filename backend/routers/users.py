@@ -288,7 +288,7 @@ class UserData(BaseModel):
     l_name: str | None = None
 
 @router.patch("/users/account/{user_id}")
-def modify_user_email(user_id: int, data: UserData):
+def modify_user_account(user_id: int, data: UserData):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
@@ -314,6 +314,35 @@ def modify_user_email(user_id: int, data: UserData):
 
         connection.commit()
         return {"message":"Account info updated"}
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Get all messagable users for an org
+@router.get("/users/message/{org_id}/{user_id}")
+def get_messagable_users(org_id: int, user_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, f_name || ' ' || l_name AS name
+            FROM users
+            WHERE org_id = %s AND
+            id <> %s
+            ORDER BY l_name ASC
+        """, (org_id, user_id))
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "name": row[1]
+            }
+            for row in rows
+        ]
     except Exception:
         connection.rollback()
         raise

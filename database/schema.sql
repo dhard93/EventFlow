@@ -104,13 +104,15 @@ CREATE TABLE conversations (
     user2_id BIGINT NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,
-    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE messages (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     conversation_id BIGINT NOT NULL
-        REFERENCES conversations(id),
+        REFERENCES conversations(id)
+        ON DELETE CASCADE,
     sender_id BIGINT NOT NULL
         REFERENCES users(id)
         ON DELETE CASCADE,

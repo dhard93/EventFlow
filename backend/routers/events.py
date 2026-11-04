@@ -275,7 +275,7 @@ def get_pending_requests(org_id: int):
         connection.close()
 
 
-# Get all approved events in the current month
+# Get all pending and approved events in the current month
 @router.get("/events/approved/{org_id}/{month}/{year}")
 def get_events(org_id: int, month: int, year: int):
     connection = get_db_connection()

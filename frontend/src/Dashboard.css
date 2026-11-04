@@ -1215,3 +1215,287 @@
   background: #ffffff;
   box-shadow: 0 0 0 2px #ffffff30;
 }
+
+
+/* ========================================
+   CONVERSATIONS
+======================================== */
+
+.dashboard-left > .conversations-panel {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.conversations-panel h2 {
+  flex-shrink: 0;
+}
+
+.conversations-panel .upcoming-subtitle {
+  flex-shrink: 0;
+}
+
+.conversations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.1rem 0.25rem 0.1rem 0;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #edf0f5;
+  border-radius: 0.65rem;
+  background: #ffffff;
+  transition: background 150ms ease;
+}
+
+.conversation-item:hover {
+  background: #fafbfe;
+}
+
+.conversation-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-details h3 {
+  margin: 0 0 0.25rem;
+  color: #20283a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.conversation-details p {
+  margin: 0;
+  color: #778197;
+  font-size: 0.8rem;
+}
+
+/* Unread message indicator */
+
+.conversation-unread-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 0.55rem;
+  border-radius: 50%;
+  background: #2563eb;
+  box-shadow: 0 0 0 3px #2563eb15;
+}
+
+/* Scrollbar */
+
+.conversations-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversations-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversations-list::-webkit-scrollbar-thumb {
+  background: #d1d5e0;
+  border-radius: 999px;
+}
+
+.conversations-list::-webkit-scrollbar-thumb:hover {
+  background: #aab2c2;
+}
+
+
+/* Conversations heading */
+
+.conversations-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+}
+
+.conversations-heading h2 {
+  margin: 0;
+}
+
+.conversations-heading .upcoming-subtitle {
+  margin-bottom: 0;
+}
+
+.new-message-button {
+  flex-shrink: 0;
+  padding: 0.55rem 0.8rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #2563eb;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-message-button:hover {
+  background: #1d4ed8;
+}
+
+.conversation-item {
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Compose modal */
+
+.compose-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.compose-card {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.compose-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.compose-header h2 {
+  margin: 0;
+  color: #20283a;
+  font-size: 1.25rem;
+}
+
+.compose-close {
+  border: none;
+  background: transparent;
+  color: #778197;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.compose-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.compose-field label {
+  color: #344054;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.compose-field select,
+.compose-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.8rem;
+  border: 1px solid #dce1ea;
+  border-radius: 0.55rem;
+  background: white;
+  color: #20283a;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.compose-field select:focus,
+.compose-field textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px #2563eb15;
+}
+
+.compose-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.compose-character-count {
+  align-self: flex-end;
+  color: #929bad;
+  font-size: 0.75rem;
+}
+
+.compose-info {
+  margin: 0;
+  color: #778197;
+  font-size: 0.85rem;
+}
+
+.compose-error {
+  margin: 0 0 1rem;
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
+.compose-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.compose-cancel,
+.compose-send {
+  padding: 0.7rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compose-cancel {
+  border: 1px solid #dce1ea;
+  background: white;
+  color: #475467;
+}
+
+.compose-send {
+  border: none;
+  background: #2563eb;
+  color: white;
+}
+
+.compose-send:hover {
+  background: #1d4ed8;
+}
+
+.compose-send:disabled,
+.compose-cancel:disabled,
+.compose-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
