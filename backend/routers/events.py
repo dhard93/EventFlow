@@ -7,6 +7,10 @@ from constants import *
 
 router = APIRouter()
 
+####################
+# HELPER FUNCTIONS ###################################################
+####################
+
 # Check if an event request's data and time is vacant for the requested space.
 def check_event_time(curs, req_id):
     curs.execute("""
@@ -77,6 +81,11 @@ def cancel_event(curs, event_id):
     """, (CANCELLED, event_id,))
 
 
+#############
+# ENDPOINTS #######################################################
+#############
+
+
 # Manually approve event
 @router.patch("/events/approve/{req_id}")
 def manual_process_event_request(req_id: int):
@@ -89,7 +98,10 @@ def manual_process_event_request(req_id: int):
         return {"message":"Event request approved."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to approve event."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -107,7 +119,10 @@ def manual_process_event_request(req_id: int):
         return {"message":"Event cancelled."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to cancel event."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -128,7 +143,10 @@ def manual_process_event_request(req_id: int, data: DenialReason):
         return {"message":"Event request denied."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to deny event."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -158,7 +176,10 @@ def auto_process_event_request(req_id: int):
         connection.commit()
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to process event."
+        )
     cursor.close()
     connection.close()
     return output
@@ -243,7 +264,10 @@ def create_event_request(data: EventData):
         return {"message": "Event request created"}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to create event request."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -269,7 +293,10 @@ def get_pending_requests(org_id: int):
         return rows
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get pending events."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -303,7 +330,10 @@ def get_events(org_id: int, month: int, year: int):
         return rows
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get events."
+        )
     finally:
         cursor.close()
         connection.close()
@@ -336,7 +366,10 @@ def get_pending_requests(user_id: int, current_date: date):
         return rows
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get events."
+        )
     finally:
         cursor.close()
         connection.close()

@@ -1,4 +1,4 @@
-
+import '../AddVenue.css'
 import { useState } from "react";
 
 function createSpace(id) {

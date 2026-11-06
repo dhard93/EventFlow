@@ -28,15 +28,16 @@ def add_notification(data: NotificationData):
         return {"message": "Notification received."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to create notification."
+        )
     finally:
         cursor.close()
         connection.close()
 
 
 # Get all unread notifications for a user
-# TODO: Change to also return id for each unread notification
-#       in order to use with marking as read
 @router.get("/notifications/unread/{user_id}")
 def get_unread_notifications(user_id: int):
     connection = get_db_connection()
@@ -54,7 +55,10 @@ def get_unread_notifications(user_id: int):
         return rows
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to mark notification as read."
+        )
     finally:
         cursor.close()
         connection.close()

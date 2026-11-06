@@ -13,7 +13,8 @@ def get_messages(conv_id: int):
 
     try:
         cursor.execute("""
-            SELECT M.sender_id, M.message, M.date_created, U.f_name || ' ' || U.l_name AS other_user_name
+            SELECT M.sender_id, M.message, M.date_created,
+                   U.f_name || ' ' || U.l_name AS other_user_name
             FROM messages M
             JOIN users U ON M.sender_id = U.id
             WHERE conversation_id = %s
@@ -26,14 +27,14 @@ def get_messages(conv_id: int):
         traceback.print_exc()
         raise HTTPException(
             status_code=500,
-            detail="Unable to create conversation."
+            detail="Unable to get messages."
         )
     finally:
         cursor.close()
         connection.close()
 
 
-# Send a message
+# Send a message in an existing conversation
 class MessageData(BaseModel):
     conv_id: int
     sender_id: int
@@ -57,7 +58,7 @@ def send_message(data: MessageData):
             traceback.print_exc()
             raise HTTPException(
                 status_code=500,
-                detail="Unable to create conversation."
+                detail="Unable to send message."
             )
     finally:
         cursor.close()
@@ -84,6 +85,7 @@ def mark_unread_messages(conv_id: int, user_id: int):
         traceback.print_exc()
         raise HTTPException(
             status_code=500,
+            detail="Unable to mark message as read."
         )
     finally:
         cursor.close()

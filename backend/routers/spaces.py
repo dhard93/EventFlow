@@ -1,89 +1,81 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, HTTPException
 from database import get_db_connection
+from pydantic import BaseModel
 
 router = APIRouter()
 
 # Get all spaces for a venue
 @router.get("/spaces/{venue_id}")
 def get_venue_spaces(venue_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT id, name
-        FROM SPACES
-        WHERE venue_id = %s""", (venue_id,)
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return [{"id": row[0], "name": row[1]} for row in rows]
-
-# Add a space to a venue
-@router.post("/spaces")
-def add_space(data: dict = Body(...)):
-    query = """
-        INSERT INTO SPACES
-            (venue_id, name, floor, capacity, table_max)
-        VALUES
-            (%s, %s, %s, %s, %s)
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        query,
-        (
-            data["venue_id"],
-            data["name"],
-            data["floor"],
-            data["capacity"],
-            data["table_max"]
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT id, name
+            FROM SPACES
+            WHERE venue_id = %s""", (venue_id,)
         )
-    )
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return {"message": "Space added successfully."}
+        rows = cursor.fetchall()
+        return [{"id": row[0], "name": row[1]} for row in rows]
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get spaces."
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
 
 # Delete a space
 @router.delete("/spaces")
 def delete_space(space_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM venues WHERE id = %s", (space_id,))
-    connection.commit()
-    cursor.close
-    connection.close()
-    return {"message": "Space deleted"}
-
-# Toggle space bookability
-@router.patch("/spaces/bookable")
-def toggle_venue_active_status(space_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        UPDATE spaces
-        SET is_bookable = NOT is_bookable
-        WHERE id = %s
-    """, (space_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return {"message": "Space bookability updated."}
-
-# Toggle space in_use status
-@router.patch("/spaces/in_use")
-def toggle_venue_active_status(space_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        UPDATE spaces
-        SET is_in_use = NOT is_in_use
-        WHERE id = %s
-    """, (space_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    return {"message": "Space in_use status updated."}\
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM spaces WHERE id = %s", (space_id,))
+        return {"message":"Space deleted"}
+    except Exception:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to add space."
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
-# Show all spaces that are available in particular time range and date
+# Update space data
+class SpaceUpdateData(BaseModel):
+    name: str | None = None
+    floor: int | None = None
+    capacity: int | None = None
+    chair_count: int | None = None
+    table_count: int | None = None
+    table_max: int | None = None
+
+@router.patch("/spaces/{s_id}")
+def update_space(s_id: int, data: SpaceUpdateData):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        update_table(cursor, "spaces", s_id, data)
+        connection.commit()
+        return {"message": "Space updated."}
+    except Exception:
+            connection.rollback()
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=500,
+                detail="Unable to update space."
+            )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()

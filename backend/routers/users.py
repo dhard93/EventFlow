@@ -3,9 +3,9 @@ from security import *
 from fastapi import APIRouter, HTTPException, Response, Request
 from database import get_db_connection
 from constants import *
+from util import *
 
 router = APIRouter()
-
 
 # Validate user session on page reload
 @router.get("/users/sessions/me")
@@ -51,10 +51,11 @@ def get_user_session(request: Request):
             "admin_id": session[4]
 
         }
-
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get info for 1 user account
@@ -77,11 +78,15 @@ def get_user_data(org_id: int, user_id: int):
             "last_name": row[0][2],
         }
     except Exception:
-        connection.rollback()
-        raise
+            raise HTTPException(
+                status_code=500,
+                detail="Unable to get account info."
+            )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get user with matching email/password for login and return
@@ -140,10 +145,11 @@ def login(data: LoginRequest, response: Response):
             "organization_name": user[4],
             "admin_id": user[5]
         }
-
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Log user out by deleting their user_sessions entry
@@ -159,22 +165,25 @@ def logout(request: Request, response: Response):
                 DELETE FROM user_sessions
                 WHERE session_token_hash = %s
             """, (hash_session_token(token),))
-
-            connection.commit()
-
+            return {"message": "Logged out successfully"}
+        except Exception:
+                connection.rollback()
+                raise HTTPException(
+                    status_code=500,
+                    detail="Unable to logout."
+                )
         finally:
-            cursor.close()
-            connection.close()
-
-    response.delete_cookie(
-        key="eventflow_session",
-        path="/",
-        httponly=True,
-        secure=False,
-        samesite="lax",
-    )
-
-    return {"message": "Logged out successfully"}
+            response.delete_cookie(
+                key="eventflow_session",
+                path="/",
+                httponly=True,
+                secure=False,
+                samesite="lax",
+            )
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
 
 # Get all users who have requested an event at a particular venue
@@ -192,11 +201,15 @@ def get_users_by_venue_req(venue_id: int):
         """, (venue_id,))
         return rows
     except Exception:
-        connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get users."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get all guest users who have a pending event request for an org
@@ -215,11 +228,15 @@ def get_requesting_users(org_id: int):
         rows = cursor.fetchall()
         return rows
     except Exception:
-        connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get users."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Add a user to an org
@@ -254,10 +271,15 @@ def add_user(data: UserData):
         return {"message": "User created."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get add user."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Delete user account
@@ -269,57 +291,47 @@ def delete_user(user_id: int):
         cursor.execute("""
             DELETE FROM users
             WHERE id = %s
-        """, (user_id))
+        """, (user_id,))
         connection.commit()
-        return rows
+        return {"message":"User deleted"}
     except Exception:
-        connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to delete user."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Update user account data
-class UserData(BaseModel):
+class UserUpdateData(BaseModel):
     email: str | None = None
     password: str | None = None
     f_name: str | None = None
     l_name: str | None = None
 
 @router.patch("/users/account/{user_id}")
-def modify_user_account(user_id: int, data: UserData):
+def modify_user_account(user_id: int, data: UserUpdateData):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        update_cols = {
-            k: v
-            for k, v in data.model_dump(exclude_unset=True).items()
-            if v is not None
-        }
-
-        if not update_cols:
-            raise HTTPException(status_code=400, detail="No fields to update")
-
-        if "password" in update_cols:
-            update_cols["password"] = hash_password(update_cols["password"])
-
-        set_clause = ", ".join(f"{col} = %s" for col in update_cols)
-
-        cursor.execute("""
-            UPDATE users
-            SET %s
-            WHERE id = %s
-        """, (set_clause, user_id))
-
+        update_table(cursor, "users", user_id, data)
         connection.commit()
         return {"message":"Account info updated"}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to update account info."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get all messagable users for an org
@@ -344,8 +356,45 @@ def get_messagable_users(org_id: int, user_id: int):
             for row in rows
         ]
     except Exception:
-        connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get users."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+# Get all guest/staff users for an org
+@router.get("/users/{org_id}")
+def get_staff_and_guests(org_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, f_name || ' ' || l_name AS name
+            FROM users
+            WHERE org_id = %s AND
+            account_type_id <> %s
+            ORDER BY l_name ASC
+        """, (org_id, ADMIN))
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "name": row[1]
+            }
+            for row in rows
+        ]
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get users."
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()

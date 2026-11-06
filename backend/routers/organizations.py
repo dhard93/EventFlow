@@ -5,21 +5,31 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+# Get organization name using its ID
 @router.get("/organizations/name/{user_id}")
 def get_user_org_name(user_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT O.name
-        FROM organizations O
-        JOIN users U
-        ON O.id = U.org_id
-        WHERE U.id = %s
-    """, (user_id,))
-    row = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return row
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT O.name
+            FROM organizations O
+            JOIN users U
+            ON O.id = U.org_id
+            WHERE U.id = %s
+        """, (user_id,))
+        row = cursor.fetchone()
+        return row
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to mark notification as read."
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Create a new organization and administrator
@@ -79,19 +89,24 @@ def add_org(data: CreateOrg, response: Response):
 
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to create organization."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Modify organization name
-class NewOrgData(BaseModel):
+class OrgUpdateData(BaseModel):
     org_id: int
     new_name: str
 
 @router.patch("/organizations")
-def set_org_name(data: NewOrgData):
+def set_org_name(data: OrgUpdateData):
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -106,10 +121,15 @@ def set_org_name(data: NewOrgData):
         return {"message": "Organization name successfully changed."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to modify organization name."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Delete organization
@@ -121,12 +141,17 @@ def delete_org(org_id: int):
         cursor.execute("""
             DELETE FROM organizations
             WHERE id = %s
-        """, (data.org_id,))
+        """, (org_id,))
         connection.commit()
         return {"message": "Organization has beed deleted."}
     except Exception:
         connection.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to delete organization."
+        )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()

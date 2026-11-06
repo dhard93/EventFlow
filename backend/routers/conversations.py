@@ -45,7 +45,10 @@ def get_user_conversations(user_id: int):
     except Exception:
         connection.rollback()
         traceback.print_exc()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get conversations."
+        )
     finally:
         cursor.close()
         connection.close()

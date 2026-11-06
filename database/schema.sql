@@ -36,7 +36,6 @@ CREATE TABLE venues (
     city VARCHAR(100),
     state VARCHAR(100),
     zip VARCHAR(20),
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -52,8 +51,6 @@ CREATE TABLE spaces (
     chair_count INTEGER,
     table_count INTEGER,
     table_max INTEGER,
-    is_bookable BOOLEAN NOT NULL DEFAULT TRUE,
-    is_in_use BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE events (
@@ -117,6 +114,7 @@ CREATE TABLE messages (
         REFERENCES users(id)
         ON DELETE CASCADE,
     message TEXT NOT NULL,
+    has_read BOOLEAN NOT NULL DEFAULT FALSE,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
