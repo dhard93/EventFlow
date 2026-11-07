@@ -165,6 +165,7 @@ def logout(request: Request, response: Response):
                 DELETE FROM user_sessions
                 WHERE session_token_hash = %s
             """, (hash_session_token(token),))
+            connection.commit()
             return {"message": "Logged out successfully"}
         except Exception:
                 connection.rollback()

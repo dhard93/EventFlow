@@ -55,10 +55,10 @@ def process_venue_spaces(op, curs, v_id, spaces):
 # Get all data for a single venue and all of its spaces
 @router.get("/venues/{venue_id}")
 def get_venue_data(venue_id: int):
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
+    connection = get_db_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
 
+    try:
         # Get the venue data
         cursor.execute("""
             SELECT name, address, city, state, zip
@@ -89,11 +89,11 @@ def get_venue_data(venue_id: int):
 
 
 # Get all venues for an organization
-@router.get("/venues/{org_id}")
+@router.get("/venues/all/{org_id}")
 def get_org_venues(org_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
         cursor.execute("""
             SELECT id, name
             FROM VENUES
@@ -102,6 +102,7 @@ def get_org_venues(org_id: int):
         rows = cursor.fetchall()
         return [{"id": row[0], "name": row[1]} for row in rows]
     except Exception:
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail="Unable to get venues."
@@ -113,6 +114,7 @@ def get_org_venues(org_id: int):
             connection.close()
 
 
+# Update a venue and/or any of its spaces
 class VenueUpdateData(BaseModel):
     name: str | None = None
     address: str | None = None
@@ -214,9 +216,9 @@ def add_venue(data: VenueData):
 # Delete a venue from an organization
 @router.delete("/venues")
 def delete_venue(venue_id: int):
+    connection = get_db_connection()
+    cursor = connection.cursor()
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
         cursor.execute("DELETE FROM venues WHERE id = %s", (venue_id,))
         return {"message": "Venue deleted"}
     except Exception:

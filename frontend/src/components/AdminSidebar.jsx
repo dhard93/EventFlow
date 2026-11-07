@@ -2,6 +2,7 @@ export default function AdminSidebar({
   logout,
   onMyAccount,
   onAddUser,
+  onMyOrganization,
   onAddVenue,
   onEventRequests,
   hasUnreadNotifications,
@@ -38,7 +39,14 @@ export default function AdminSidebar({
           <span>My Account</span>
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onMyOrganization();
+          }}
+        >
           <span className="nav-icon">♙</span>
           <span>My Organization</span>
         </a>

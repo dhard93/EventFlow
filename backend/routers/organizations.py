@@ -6,7 +6,7 @@ from pydantic import BaseModel
 router = APIRouter()
 
 # Get organization name using its ID
-@router.get("/organizations/name/{user_id}")
+@router.get("/organizations/name/{org_id}")
 def get_user_org_name(user_id: int):
     try:
         connection = get_db_connection()
@@ -17,7 +17,7 @@ def get_user_org_name(user_id: int):
             JOIN users U
             ON O.id = U.org_id
             WHERE U.id = %s
-        """, (user_id,))
+        """, (org_id,))
         row = cursor.fetchone()
         return row
     except Exception:

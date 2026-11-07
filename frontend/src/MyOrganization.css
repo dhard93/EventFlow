@@ -1,0 +1,454 @@
+
+/* ========================================
+   MY ORGANIZATIONS MODAL
+======================================== */
+
+.my-organizations-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 1rem;
+  background: rgb(23 34 56 / 42%);
+  backdrop-filter: blur(3px);
+  color: #20283a;
+}
+
+.my-organizations-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(23 34 56 / 20%);
+}
+
+.my-organizations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.my-organizations-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #172238;
+  font-size: 1.1rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.my-organizations-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  box-shadow: 0 4px 14px #6366d933;
+}
+
+.my-organizations-close {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #778197;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.my-organizations-close:hover {
+  background: #f0f0ff;
+  color: #4f52b8;
+}
+
+.my-organizations-heading {
+  padding: 1.25rem 1.5rem 1rem;
+}
+
+.my-organizations-heading h1 {
+  margin: 0 0 0.4rem;
+  color: #172238;
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.my-organizations-heading p {
+  margin: 0;
+  color: #778197;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.my-organizations-content {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.organization-section,
+.organization-list-section {
+  padding: 1.2rem 0;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.my-organizations-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.my-organizations-section-heading h2 {
+  margin: 0 0 0.3rem;
+  color: #172238;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.my-organizations-section-heading p {
+  margin: 0;
+  color: #8991a3;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.organization-name-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1.3rem;
+}
+
+.organization-name-field label {
+  color: #465066;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.organization-name-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.organization-name-controls input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 0.55rem;
+  outline: none;
+  background: #fff;
+  color: #20283a;
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.organization-name-controls input:focus {
+  border-color: #6366d9;
+  box-shadow: 0 0 0 3px rgb(99 102 217 / 12%);
+}
+
+.organization-name-controls input:disabled {
+  background: #f8f9fc;
+  cursor: not-allowed;
+}
+
+.organization-name-controls button {
+  flex-shrink: 0;
+}
+
+.my-organizations-secondary,
+.my-organizations-save,
+.my-organizations-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.45rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #dfe3eb;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.my-organizations-secondary {
+  background: #fff;
+  color: #465066;
+}
+
+.my-organizations-secondary:hover:not(:disabled) {
+  background: #f8f9fc;
+}
+
+.my-organizations-save {
+  border-color: #6366d9;
+  background: #6366d9;
+  color: #fff;
+}
+
+.my-organizations-save:hover:not(:disabled) {
+  border-color: #4f52b8;
+  background: #4f52b8;
+}
+
+.my-organizations-delete {
+  border-color: #e8c3c3;
+  background: #fff;
+  color: #b42323;
+}
+
+.my-organizations-delete:hover:not(:disabled) {
+  border-color: #b42323;
+  background: #fff0f0;
+}
+
+.my-organizations-secondary:disabled,
+.my-organizations-save:disabled,
+.my-organizations-delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.organization-danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #f0dddd;
+  border-radius: 0.65rem;
+  background: #fffafa;
+}
+
+.organization-danger-zone strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #8f2929;
+  font-size: 0.85rem;
+}
+
+.organization-danger-zone p {
+  margin: 0;
+  color: #8991a3;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.my-organizations-count {
+  display: grid;
+  place-items: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.4rem;
+  border-radius: 2rem;
+  background: #f0f0ff;
+  color: #5558bc;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.my-organizations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.my-organizations-list-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3.2rem;
+  gap: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #e5e8ef;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #20283a;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.my-organizations-list-button:hover,
+.my-organizations-list-button.selected {
+  border-color: #a5a5e8;
+  background: #f8f8ff;
+}
+
+.organization-list-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.55rem;
+  background: #f0f0ff;
+  color: #6366d9;
+  font-size: 1rem;
+}
+
+.organization-list-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #30394d;
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.organization-list-arrow {
+  color: #8991a3;
+  font-size: 1.1rem;
+}
+
+.organization-user-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.organization-user-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #f0dddd;
+  border-radius: 0.55rem;
+  background: #fffafa;
+}
+
+.organization-user-actions > span {
+  color: #8f2929;
+  font-size: 0.8rem;
+}
+
+.organization-user-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.my-organizations-selection {
+  margin: 0.8rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  background: #f8f9fc;
+  color: #778197;
+  font-size: 0.8rem;
+}
+
+.my-organizations-selection strong {
+  color: #465066;
+}
+
+.my-organizations-info,
+.my-organizations-error,
+.my-organizations-message {
+  margin: 0 0 1rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.55rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.my-organizations-info {
+  background: #f8f9fc;
+  color: #778197;
+  text-align: center;
+}
+
+.my-organizations-error {
+  border: 1px solid #f5caca;
+  background: #fff0f0;
+  color: #b42323;
+}
+
+.my-organizations-message {
+  border: 1px solid #c8e8d3;
+  background: #f0faf3;
+  color: #247642;
+}
+
+.my-organizations-overlay button:focus-visible {
+  outline: 2px solid #6366d9;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .my-organizations-overlay {
+    padding: 0.5rem;
+  }
+
+  .my-organizations-card {
+    max-height: 95vh;
+    max-height: 95dvh;
+    border-radius: 0.75rem;
+  }
+
+  .my-organizations-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .my-organizations-heading {
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .my-organizations-content {
+    padding: 0 1rem 1rem;
+  }
+
+  .organization-name-controls {
+    flex-wrap: wrap;
+  }
+
+  .organization-name-controls input {
+    flex-basis: 100%;
+  }
+
+  .organization-danger-zone {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .organization-user-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

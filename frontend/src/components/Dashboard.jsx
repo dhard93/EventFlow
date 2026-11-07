@@ -15,6 +15,7 @@ import EventRequests from "./EventRequests";
 import MyAccount from "./MyAccount";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
+import MyOrganization from "./MyOrganization";
 
 function matchesMonthlyWeekday(dateKey, startDate) {
   const [sy, sm, sd] = startDate.split("-").map(Number);
@@ -92,6 +93,7 @@ export default function Dashboard({
   organizationId,
   userId,
   organizationName,
+  onOrganizationNameChange,
   accountType,
   adminId,
   hasUnreadNotifications,
@@ -115,6 +117,7 @@ export default function Dashboard({
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [conversationsError, setConversationsError] = useState(null);
   const [today] = useState(() => new Date());
+  const [showMyOrganization, setShowMyOrganization] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(() =>
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -269,11 +272,22 @@ export default function Dashboard({
           logout={logout}
           onMyAccount={() => setShowMyAccount(true)}
           onAddUser={() => setShowRegister(true)}
+          onMyOrganization={() => setShowMyOrganization(true)}
           onAddVenue={() => setShowAddVenue(true)}
           onEventRequests={() => setShowEventRequests(true)}
           hasUnreadNotifications={hasUnreadNotifications}
           hasUnreadEventRequests={hasUnreadEventRequests}
           onNotifications={() => setShowNotifications(true)}
+        />
+      )}
+
+      {accountType === 1 && showMyOrganization && (
+        <MyOrganization
+          organizationId={organizationId}
+          organizationName={organizationName}
+          onOrganizationNameChange={onOrganizationNameChange}
+          onOrganizationDeleted={logout}
+          onClose={() => setShowMyOrganization(false)}
         />
       )}
 

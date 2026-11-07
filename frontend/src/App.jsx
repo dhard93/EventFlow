@@ -120,39 +120,9 @@ export default function App() {
     restoreSession();
   }, []);
 
-  const logout = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:8000/users/logout",
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          }
-        }
-      );
 
-      const result = await response.json();
-      console.log(result);
 
-      if (!response.ok) {
-        SpeechSynthesisErrorEvent(`Request failed: ${response.status}`);
-        return;
-      }
 
-    setUserId(null);
-    setOrganizationId(null);
-    setOrganizationName("");
-    setAccountType(null);
-    setAdminId(null);
-    setPage("login");
-
-    } catch (err) {
-      console.error("Login error:", err);
-      setMessage("An unexpected error occurred.");
-    }
-  }
 
   // Avoid briefly showing the login screen before checking the cookie.
   if (isCheckingSession) {
@@ -193,6 +163,7 @@ export default function App() {
         organizationId={organizationId}
         userId={userId}
         organizationName={organizationName}
+        onOrganizationNameChange={setOrganizationName}
         accountType={accountType}
         adminId={adminId}
         hasUnreadNotifications={hasUnreadNotifications}
@@ -224,4 +195,35 @@ export default function App() {
       onCreateOrganizationClick={() => setPage("register-org")}
     />
   );
-}
+}  const logout = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/users/logout",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Logout failed:", result);
+        return;
+      }
+
+      console.log("Logout result:", result);
+
+      setUserId(null);
+      setOrganizationId(null);
+      setOrganizationName("");
+      setAccountType(null);
+      setAdminId(null);
+      setHasUnreadNotifications(false);
+      setHasUnreadEventRequests(false);
+      setPage("login");
+
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
