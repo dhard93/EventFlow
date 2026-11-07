@@ -7,23 +7,49 @@ import traceback
 
 router = APIRouter()
 
-def add_venue_spaces(curs, v_id, spaces):
-    execute_values(curs, """
-        INSERT INTO SPACES
-            (venue_id, name, floor, capacity, chair_count, table_count, table_max)
-        VALUES %s
-    """, [
-        (
-            v_id,
-            s.name,
-            s.floor,
-            s.capacity,
-            s.chair_count,
-            s.table_count,
-            s.table_max
-        )
-        for s in spaces
-    ])
+# Modify venue data
+class SpaceData(BaseModel):
+    id: int | None = None
+    name: str | None = None
+    floor: int | None = None
+    capacity: int | None = None
+    chair_count: int | None = None
+    table_count: int | None = None
+    table_max: int | None = None
+
+def process_venue_spaces(op, curs, v_id, spaces):
+    match op:
+        case 0:
+            query = """
+                INSERT INTO spaces
+                    (venue_id, name, floor, capacity, chair_count,
+                     table_count, table_max)
+                VALUES %s
+            """
+            values = [(
+                    v_id,
+                    s.name,
+                    s.floor,
+                    s.capacity,
+                    s.chair_count,
+                    s.table_count,
+                    s.table_max
+                ) for s in spaces]
+            execute_values(curs, query, values)
+        case 1:
+            for s in spaces:
+                update_table(
+                    curs, SPACES, SpaceData, s,
+                    "venue_id = %s AND id = %s",
+                    (v_id, s.id))
+        case 2:
+            query = """
+                DELETE FROM spaces
+                WHERE venue_id = %s AND
+                id = %s
+            """
+            values = [(v_id, s.id) for s in spaces]
+            curs.executemany(query, values)
 
 
 # Get all data for a single venue and all of its spaces
@@ -87,35 +113,33 @@ def get_org_venues(org_id: int):
             connection.close()
 
 
-# Modify venue data
-class SpaceData(BaseModel):
-    name: str
-    floor: int
-    capacity: int
-    chair_count: int
-    table_count: int
-    table_max: int
-
 class VenueUpdateData(BaseModel):
     name: str | None = None
     address: str | None = None
     city: str | None = None
     state: str | None = None
     zip: str | None = None
-    is_active: bool | None = None
-    spaces: list[SpaceData] | None = None
+    del_spaces: list[SpaceData] | None = None
+    upd_spaces: list[SpaceData] | None = None
+    new_spaces: list[SpaceData] | None = None
 
 @router.patch("/venues/{v_id}")
 def modify_venue(v_id: int, data: VenueUpdateData):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
         # Update venue
-        update_table(cursor, "venues", v_id, data)
+        update_table(cursor, VENUES, VenueUpdateData, data,
+        "id = %s", (v_id,))
 
         # Add new spaces if any data was sent
-        add_venue_spaces(cursor, v_id, data.spaces)
+        if data.del_spaces:
+            process_venue_spaces(DELETE, cursor, v_id, data.del_spaces)
+        if data.upd_spaces:
+            process_venue_spaces(UPDATE, cursor, v_id, data.upd_spaces)
+        if data.new_spaces:
+            process_venue_spaces(ADD, cursor, v_id, data.new_spaces)
 
         connection.commit()
 
@@ -169,7 +193,7 @@ def add_venue(data: VenueData):
         # Get the new venue's id and use it to add all its spaces
         # to the database in 1 multirow query
         venue_id = cursor.fetchone()[0]
-        add_venue_spaces(cursor, venue_id, data.spaces)
+        process_venue_spaces(cursor, venue_id, data.spaces)
 
         connection.commit()
         return {"message": "Venue added successfully."}

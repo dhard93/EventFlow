@@ -318,7 +318,10 @@ def modify_user_account(user_id: int, data: UserUpdateData):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        update_table(cursor, "users", user_id, data)
+        update_table(
+            curs, USERS, UserUpdateData, data,
+            "id = %s", (user_id,)
+        )
         connection.commit()
         return {"message":"Account info updated"}
     except Exception:

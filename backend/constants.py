@@ -18,3 +18,13 @@ USER_ACCT_UPDATED = 4
 ADMIN = 1
 STAFF = 2
 GUEST = 3
+
+# Table enums for multi-row update queries
+VENUES = "venues"
+SPACES = "spaces"
+USERS = "users"
+
+# Multi-row query operation codes
+ADD = 0
+UPDATE = 1
+DELETE = 2
