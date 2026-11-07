@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../MyOrganization.css";
+import AddVenue from "./AddVenue";
 
 const API_BASE = "http://localhost:8000";
 
@@ -385,12 +386,6 @@ export default function MyOrganization({
                     ))}
                   </div>
                 )}
-
-                {selectedVenue && (
-                  <p className="my-organizations-selection">
-                    Selected venue: <strong>{selectedVenue.name}</strong>
-                  </p>
-                )}
               </section>
 
               {/* USERS SECTION */}
@@ -482,6 +477,53 @@ export default function MyOrganization({
           )}
         </div>
       </div>
+        {selectedVenue && (
+          <div
+            className="modal-overlay"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedVenue(null);
+            }}
+          >
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AddVenue
+                key={selectedVenue.id}
+                organizationId={organizationId}
+                venueId={selectedVenue.id}
+                onClose={() => setSelectedVenue(null)}
+                onSubmit={async () => {
+                  try {
+                    const response = await fetch(
+                      `${API_BASE}/venues/all/${organizationId}`,
+                      {
+                        method: "GET",
+                        credentials: "include",
+                      }
+                    );
+
+                    if (!response.ok) {
+                      throw new Error("Unable to refresh venues.");
+                    }
+
+                    const data = await response.json();
+
+                    setVenues(
+                      Array.isArray(data) ? data : []
+                    );
+                  } catch (err) {
+                    console.error(
+                      "Failed to refresh venues:",
+                      err
+                    );
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 }
