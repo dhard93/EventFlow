@@ -4,6 +4,15 @@ import RegisterUser from "./components/RegisterUser";
 import RegisterOrg from "./components/RegisterOrg";
 import Dashboard from "./components/Dashboard";
 
+/*
+  TODO:
+
+  - Make My Events use react event data instead of back end
+  - Analytics module
+  - Add is_set to event table and let it be marked by staff users
+  - Test all endpoints
+*/
+
 export default function App() {
   const [page, setPage] = useState("login");
   const [userId, setUserId] = useState(null);
@@ -121,7 +130,38 @@ export default function App() {
   }, []);
 
 
+  const logout = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/users/logout",
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
 
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error("Logout failed:", result);
+          return;
+        }
+
+        console.log("Logout result:", result);
+
+        setUserId(null);
+        setOrganizationId(null);
+        setOrganizationName("");
+        setAccountType(null);
+        setAdminId(null);
+        setHasUnreadNotifications(false);
+        setHasUnreadEventRequests(false);
+        setPage("login");
+
+      } catch (err) {
+        console.error("Logout error:", err);
+      }
+    };
 
 
   // Avoid briefly showing the login screen before checking the cookie.
@@ -195,35 +235,4 @@ export default function App() {
       onCreateOrganizationClick={() => setPage("register-org")}
     />
   );
-}  const logout = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:8000/users/logout",
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("Logout failed:", result);
-        return;
-      }
-
-      console.log("Logout result:", result);
-
-      setUserId(null);
-      setOrganizationId(null);
-      setOrganizationName("");
-      setAccountType(null);
-      setAdminId(null);
-      setHasUnreadNotifications(false);
-      setHasUnreadEventRequests(false);
-      setPage("login");
-
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-  };
+}

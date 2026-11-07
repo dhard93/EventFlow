@@ -1,11 +1,29 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, HTTPException
 from database import get_db_connection
 from pydantic import BaseModel, Field
 from datetime import datetime, date
 from typing import Optional
 from constants import *
+import traceback
+
+# TODO: #
+# When event is cancelled, it should send notification to admin
+# Same for other types of notifications
 
 router = APIRouter()
+
+# Query used to get an org's approved events whose end date or
+# recurrence end date are >= either current month or current date.
+# Added onto by different endpoints depending on the request
+EVENTS_QUERY = """
+    SELECT E.id, E.requesting_user_id, E.title, V.name, S.name, 
+           E.start_time, E.end_time, E.description, E.is_recurring,
+           E.recurrence_type, E.recurrence_end_date
+    FROM events E
+    JOIN venues V ON E.venue_id = V.id
+    JOIN spaces S ON E.space_id = S.id
+"""
+
 
 ####################
 # HELPER FUNCTIONS ###################################################
@@ -76,7 +94,7 @@ def deny_event(curs, req_id, d_reason):
 def cancel_event(curs, event_id):
     curs.execute("""
         UPDATE events
-        SET request_status_id = %s,
+        SET request_status_id = %s
         WHERE id = %s
     """, (CANCELLED, event_id,))
 
@@ -118,6 +136,7 @@ def manual_process_event_request(req_id: int):
         connection.commit()
         return {"message":"Event cancelled."}
     except Exception:
+        traceback.print_exc()
         connection.rollback()
         raise HTTPException(
             status_code=500,
@@ -302,20 +321,16 @@ def get_pending_requests(org_id: int):
         connection.close()
 
 
-# Get all pending and approved events in the current month
+# Get all pending and approved events in the current month or
+# recurring through or past the current month
 @router.get("/events/approved/{org_id}/{month}/{year}")
 def get_events(org_id: int, month: int, year: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     event_date = datetime(year, month, 1)
     try:
-        cursor.execute("""
-            SELECT E.title, V.name, S.name, E.start_time, E.end_time,
-            E.description, E.is_recurring, E.recurrence_type,
-            E.recurrence_end_date
-            FROM events E
-            JOIN venues V ON E.venue_id = V.id
-            JOIN spaces S ON E.space_id = S.id
+        cursor.execute(f"""
+            {EVENTS_QUERY}
             WHERE E.org_id = %s AND
             E.request_status_id = %s AND ((
                 EXTRACT(MONTH FROM E.start_time) = %s AND
@@ -337,6 +352,39 @@ def get_events(org_id: int, month: int, year: int):
     finally:
         cursor.close()
         connection.close()
+
+
+# Get all approved events requested by a particular user whose
+# end date or recurrence end date is >= current date
+@router.get("/events/user/{user_id}")
+def get_user_req_events(user_id):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(f"""
+            {EVENTS_QUERY}
+            WHERE E.request_status_id = %s AND 
+            E.requesting_user_id = %s AND ((
+                E.is_recurring = FALSE AND
+                E.end_time >= NOW()
+            ) OR (
+                E.is_recurring = TRUE AND
+                E.recurrence_end_date >= CURRENT_DATE
+            ))
+        """, (APPROVED, user_id))
+        rows = cursor.fetchall()
+        return rows
+    except Exception:
+        traceback.print_exc()
+        connection.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to get events."
+        )
+    finally:
+        cursor.close()
+        connection.close()
+
 
 # Get all pending/approved events requested by a specific user
 # TODO: Change 'My Events' so that instead of hitting this endpoint,

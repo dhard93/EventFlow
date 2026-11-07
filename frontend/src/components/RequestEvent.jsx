@@ -76,7 +76,7 @@ export default function RequestEvent({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/venues/${organizationId}`,
+          `http://localhost:8000/venues/all/${organizationId}`,
           {
             credentials: "include",
             signal: controller.signal,

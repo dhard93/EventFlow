@@ -50,14 +50,14 @@ function matchesMonthlyWeekday(dateKey, startDate) {
 }
 
 function eventOccursOnDate(event, dateKey) {
-  const startDate = event[3]?.slice(0, 10);
+  const startDate = event[5]?.slice(0, 10);
 
   if (!startDate || dateKey < startDate) return false;
 
   if (!event[6]) return dateKey === startDate;
 
-  const recurrenceType = String(event[7] || "").toLowerCase();
-  const endDate = event[8]?.slice(0, 10);
+  const recurrenceType = String(event[9] || "").toLowerCase();
+  const endDate = event[10]?.slice(0, 10);
 
   if (!endDate || dateKey > endDate) return false;
 
@@ -107,6 +107,7 @@ export default function Dashboard({
   const [showRequestEvent, setShowRequestEvent] = useState(false);
   const [showMyAccount, setShowMyAccount] = useState(false);
   const [events, setEvents] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
   const [eventsError, setEventsError] = useState(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const [showMyEvents, setShowMyEvents] = useState(false);
@@ -163,6 +164,47 @@ export default function Dashboard({
 
     return () => controller.abort();
   }, [organizationId, currentMonth]);
+
+  useEffect(() => {
+    if (!userId || !organizationId) {
+      setMyEvents([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchMyEvents() {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/events/user/${userId}`,
+          {
+            credentials: "include",
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch your events.");
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid My Events response.");
+        }
+
+        setMyEvents(data);
+      } catch (error) {
+        if (error.name === "AbortError") return;
+
+        console.error("Error fetching My Events:", error);
+      }
+    }
+
+    fetchMyEvents();
+
+    return () => controller.abort();
+  }, [userId, organizationId]);
 
   // Fetch conversations on dashboard load and whenever a message is sent.
   async function fetchConversations(signal) {
@@ -400,21 +442,30 @@ export default function Dashboard({
             className="modal-content my-requests-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <MyEvents
-              userId={userId}
-              onClose={() => setShowMyEvents(false)}
-              onRequestCancelled={(cancelledEvent) => {
-                const cancelledId = cancelledEvent.event_id;
 
-                setEvents((previous) =>
-                  previous.filter((event) => event[0] !== cancelledId)
-                );
+          <MyEvents
+            userId={userId}
+            events={myEvents}
+            onClose={() => setShowMyEvents(false)}
+            onRequestCancelled={(cancelledEvent) => {
+              const cancelledId = cancelledEvent.event_id;
 
-                setSelectedDayEvents((previous) =>
-                  previous.filter((event) => event[0] !== cancelledId)
-                );
-              }}
-            />
+              // Remove from the user's events.
+              setMyEvents((previous) =>
+                previous.filter((event) => event[0] !== cancelledId)
+              );
+
+              // Remove from the organization's calendar events.
+              setEvents((previous) =>
+                previous.filter((event) => event[0] !== cancelledId)
+              );
+
+              // Remove from currently selected day's events.
+              setSelectedDayEvents((previous) =>
+                previous.filter((event) => event[0] !== cancelledId)
+              );
+            }}
+          />
           </div>
         </div>
       )}

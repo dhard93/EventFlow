@@ -1,14 +1,9 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import "../MyEvents.css";
 
-const EVENTS_URL = (userId) => {
-  const currentDate = new Date().toLocaleDateString("en-CA");
-  return `http://localhost:8000/events/user/${userId}/${currentDate}`;
-};
-
 const CANCEL_EVENT_URL = (eventId) =>
-  `http://localhost:8000/events/process/4/${eventId}`;
+  `http://localhost:8000/events/cancel/${eventId}`;
 
 const COLUMNS = [
   { key: "title", label: "Event title" },
@@ -19,40 +14,22 @@ const COLUMNS = [
   { key: "recurring", label: "Recurring" },
   { key: "recurrence_type", label: "Recurrence" },
   { key: "recurrence_end_date", label: "Recurrence Ends" },
-  { key: "date_approved", label: "Approved at" },
 ];
 
 function normalizeEvent(row) {
-  if (Array.isArray(row)) {
-    return {
-      event_id: row[0],
-      title: row[1],
-      venue: row[2],
-      space: row[3],
-      start_time: row[4],
-      end_time: row[5],
-      is_recurring: row[6],
-      recurrence_type: row[7],
-      recurrence_end_date: row[8],
-      date_approved: row[9],
-      recurring: row[6] ? "Yes" : "No",
-    };
-  }
-
-  const isRecurring = row.is_recurring;
-
   return {
-    ...row,
-    event_id: row.event_id ?? row.id,
-    venue: row.venue ?? row.name,
-    space: row.space ?? row.space_name,
-    recurring: isRecurring ? "Yes" : "No",
-    recurrence_type: isRecurring
-      ? row.recurrence_type || "—"
-      : "—",
-    recurrence_end_date: isRecurring
-      ? row.recurrence_end_date
-      : null,
+    event_id: row[0],
+    user_id: row[1],
+    title: row[2],
+    venue: row[3],
+    space: row[4],
+    start_time: row[5],
+    end_time: row[6],
+    description: row[7],
+    is_recurring: row[8],
+    recurrence_type: row[9],
+    recurrence_end_date: row[10],
+    recurring: row[8] ? "Yes" : "No",
   };
 }
 
@@ -82,61 +59,18 @@ function formatValue(value) {
 }
 
 export default function MyEvents({
-  userId,
+  events = [],
   onClose,
   onRequestCancelled,
 }) {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [cancellingId, setCancellingId] = useState(null);
 
-  const loadEvents = useCallback(async (signal) => {
-    if (!userId) {
-      setEvents([]);
-      setError("A valid user ID is required.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(EVENTS_URL(userId), {
-        credentials: "include",
-        signal,
-      });
-
-      if (!response.ok) {
-        throw new Error("Could not load your events.");
-      }
-
-      const data = await response.json();
-
-      if (!Array.isArray(data)) {
-        throw new Error("The server returned an unexpected response.");
-      }
-
-      setEvents(data.map(normalizeEvent));
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        setError(err.message || "Failed to load events.");
-      }
-    } finally {
-      if (!signal?.aborted) {
-        setLoading(false);
-      }
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadEvents(controller.signal);
-
-    return () => controller.abort();
-  }, [loadEvents]);
+  // Convert the arrays received from Dashboard into table-friendly objects.
+  const userEvents = Array.isArray(events)
+    ? events.map(normalizeEvent)
+    : [];
 
   async function handleCancel(row) {
     const eventId = row.event_id;
@@ -183,12 +117,9 @@ export default function MyEvents({
         throw new Error(detail);
       }
 
-      setEvents((previous) =>
-        previous.filter((item) => item.event_id !== eventId)
-      );
-
       setMessage(`"${row.title}" was cancelled successfully.`);
 
+      // Dashboard updates both events datasets.
       onRequestCancelled?.(row);
     } catch (err) {
       setError(err.message || "Failed to cancel the event.");
@@ -244,9 +175,7 @@ export default function MyEvents({
             </p>
           )}
 
-          {loading ? (
-            <p className="my-requests-info">Loading your events...</p>
-          ) : events.length === 0 ? (
+          {userEvents.length === 0 ? (
             <div className="my-requests-empty">
               <div className="my-requests-empty-mark">E</div>
               <h2>No approved events</h2>
@@ -267,7 +196,7 @@ export default function MyEvents({
                 </thead>
 
                 <tbody>
-                  {events.map((row, index) => (
+                  {userEvents.map((row, index) => (
                     <tr key={row.event_id ?? index}>
                       {COLUMNS.map((column) => {
                         const value = row[column.key];
