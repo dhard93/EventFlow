@@ -1,10 +1,10 @@
+
 export default function StaffSidebar({
   logout,
-  onMyAccount
+  onMyAccount,
+  hasUnreadNotifications,
+  onNotifications,
 }) {
-  const unreadMessageCount = 0;
-  const hasUnreadNotifications = false;
-
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -34,7 +34,14 @@ export default function StaffSidebar({
           <span>My Account</span>
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onNotifications();
+          }}
+        >
           <span className="nav-icon">♧</span>
           <span>Notifications</span>
           {hasUnreadNotifications && (

@@ -259,6 +259,7 @@ def add_user(data: UserData):
             INSERT INTO users
                 (org_id, email, password, f_name, l_name, account_type_id)
             VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
         """, (
                 data.org_id,
                 data.email,
@@ -268,13 +269,39 @@ def add_user(data: UserData):
                 data.account_type_id
             )
         )
+        user = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT O.name, U.id
+            FROM organizations O
+            JOIN users U ON O.id = U.org_id
+            WHERE O.id = %s AND
+            U.account_type_id = %s
+        """, (data.org_id, ADMIN))
+
+        admin = cursor.fetchone()
+        if not admin:
+            raise HTTPException(
+                status_code=404,
+                detail="Organization administrator not found."
+            )
+
         connection.commit()
-        return {"message": "User created."}
-    except Exception:
+        return {
+            "user_id": user[0],
+            "organization_name": admin[0],
+            "admin_id": admin[1]
+        }
+    except HTTPException:
         connection.rollback()
+        raise
+
+    except Exception as e:
+        connection.rollback()
+        print("User registration error:", e)
         raise HTTPException(
             status_code=500,
-            detail="Unable to get add user."
+            detail="Unable to add user."
         )
     finally:
         if cursor:

@@ -6,8 +6,6 @@ import Dashboard from "./components/Dashboard";
 
 /*
   TODO:
-
-  - Make My Events use react event data instead of back end
   - Analytics module
   - Add is_set to event table and let it be marked by staff users
   - Test all endpoints
@@ -179,7 +177,7 @@ export default function App() {
           setAccountType(data.account_type);
           setUserId(data.user_id);
           setOrganizationId(data.organization_id);
-          setAdminId(user.admin_id);
+          setAdminId(data.user_id);
           setPage("dashboard");
         }}
       />
@@ -189,9 +187,20 @@ export default function App() {
   if (page === "register-user") {
     return (
       <RegisterUser
+        onRegister={async (data) => {
+            setUserId(data.user_id);
+            setAccountType(data.account_type);
+            setOrganizationId(data.organization_id);
+            setOrganizationName(data.organization_name);
+            setAdminId(data.admin_id);
 
-        onRegister={(data) => {
-          console.log("User registration:", data);
+            await fetchUnreadNotifications(data.user_id);
+
+            if (data.account_type === 1) {
+                await fetchPendingEventRequests(data.organization_id);
+            }
+
+            setPage("dashboard");
         }}
       />
     );

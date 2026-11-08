@@ -50,6 +50,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
           account_type: result.account_type,
           organization_id: result.organization_id,
           organization_name: result.organization_name,
+          admin_id: result.admin_id
         });
       } else {
         setMessage("Login is ready to connect to your backend.");

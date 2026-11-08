@@ -4,10 +4,9 @@ export default function GuestSidebar({
   onMyAccount,
   onRequestEvent,
   onMyEvents,
+  hasUnreadNotifications,
+  onNotifications,
 }) {
-  const unreadMessageCount = 0;
-  const hasUnreadNotifications = false;
-
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -63,7 +62,14 @@ export default function GuestSidebar({
           <span>My Events</span>
         </a>
 
-        <a href="#" className="nav-link">
+        <a
+          href="#"
+          className="nav-link"
+          onClick={(e) => {
+            e.preventDefault();
+            onNotifications();
+          }}
+        >
           <span className="nav-icon">♧</span>
           <span>Notifications</span>
           {hasUnreadNotifications && (

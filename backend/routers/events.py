@@ -72,31 +72,71 @@ def check_resources(curs, req_id):
     rows = curs.fetchall()
     return rows
 
-def approve_event(curs, req_id):
+def get_admin_id(event_id):
+    return f"""
+        RETURNING (
+            SELECT U.id
+            FROM users U
+            JOIN events E
+            ON U.org_id = E.org_id
+            WHERE U.account_type_id = {ADMIN}
+        )"""
+
+def send_notification(curs, user, n_type, n_content):
     curs.execute("""
+        INSERT INTO notifications (user_id, type_id, content)
+        VALUES (%s, %s, %s)
+    """, (user, n_type, n_content))
+
+def approve_event(curs, req_id):
+    curs.execute(f"""
         UPDATE events
         SET request_status_id = %s,
             date_approved = CURRENT_TIMESTAMP,
             last_updated = CURRENT_TIMESTAMP
         WHERE id = %s
+        RETURNING requesting_user_id, title
     """, (APPROVED, req_id))
+    req_user_id, e_name = curs.fetchone()
+    send_notification(
+        curs,
+        req_user_id,
+        REQ_APPROVED,
+        f"Your event request for {e_name} has been approved!"
+    )
 
 def deny_event(curs, req_id, d_reason):
-    curs.execute("""
+    curs.execute(f"""
         UPDATE events
         SET request_status_id = %s,
-        denied_reason = %s,
-        denied_at = CURRENT_TIMESTAMP,
-        last_updated = CURRENT_TIMESTAMP
+            denied_reason = %s,
+            denied_at = CURRENT_TIMESTAMP,
+            last_updated = CURRENT_TIMESTAMP
         WHERE id = %s
+        RETURNING requesting_user_id, title
     """, (DENIED, d_reason, req_id,))
+    req_user_id, e_name = curs.fetchone()
+    send_notification(
+        curs,
+        req_user_id,
+        REQ_DENIED,
+        f"Your event request for {e_name} has been denied. Reason: {d_reason}"
+    )
 
 def cancel_event(curs, event_id):
-    curs.execute("""
+    curs.execute(f"""
         UPDATE events
         SET request_status_id = %s
         WHERE id = %s
+        {get_admin_id(req_id)}, title
     """, (CANCELLED, event_id,))
+    admin_id, e_name = curs.fetchone()
+    send_notification(
+        curs,
+        admin_id,
+        EVENT_CANCELLED,
+        f"{e_name} has been cancelled."
+    )
 
 
 #############

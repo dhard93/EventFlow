@@ -55,7 +55,14 @@ export default function RegisterUser({ onRegister, organizationId }) {
         return;
       }
 
-      onRegister?.();
+      onRegister?.({
+          user_id: result.user_id,
+          account_type: Number(accountTypeId),
+          organization_id: organizationId,
+          organization_name: result.organization_name,
+          admin_id: result.admin_id
+      });
+
     } catch (err) {
       console.error("User registration error:", err);
       setError(err.message || "An unexpected error occurred.");

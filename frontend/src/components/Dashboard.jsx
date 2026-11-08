@@ -337,6 +337,7 @@ export default function Dashboard({
         <StaffSidebar
           logout={logout}
           onMyAccount={() => setShowMyAccount(true)}
+          hasUnreadNotifications={hasUnreadNotifications}
           onNotifications={() => setShowNotifications(true)}
         />
       )}
@@ -347,6 +348,7 @@ export default function Dashboard({
           onMyAccount={() => setShowMyAccount(true)}
           onRequestEvent={() => setShowRequestEvent(true)}
           onMyEvents={() => setShowMyEvents(true)}
+          hasUnreadNotifications={hasUnreadNotifications}
           onNotifications={() => setShowNotifications(true)}
         />
       )}
@@ -493,7 +495,7 @@ export default function Dashboard({
         />
       )}
 
-      {accountType === 1 && showNotifications && (
+      {showNotifications && (
         <Notifications
           userId={userId}
           onClose={() => setShowNotifications(false)}
