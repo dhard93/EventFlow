@@ -3,6 +3,7 @@ from database import get_db_connection
 from pydantic import BaseModel
 from psycopg2.extras import execute_values, RealDictCursor
 from util import *
+from constants import *
 import traceback
 
 router = APIRouter()
@@ -195,7 +196,7 @@ def add_venue(data: VenueData):
         # Get the new venue's id and use it to add all its spaces
         # to the database in 1 multirow query
         venue_id = cursor.fetchone()[0]
-        process_venue_spaces(cursor, venue_id, data.spaces)
+        process_venue_spaces(ADD, cursor, venue_id, data.spaces)
 
         connection.commit()
         return {"message": "Venue added successfully."}

@@ -54,7 +54,7 @@ function eventOccursOnDate(event, dateKey) {
 
   if (!startDate || dateKey < startDate) return false;
 
-  if (!event[6]) return dateKey === startDate;
+  if (!event[8]) return dateKey === startDate;
 
   const recurrenceType = String(event[9] || "").toLowerCase();
   const endDate = event[10]?.slice(0, 10);

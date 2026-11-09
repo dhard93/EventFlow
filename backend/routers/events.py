@@ -6,10 +6,6 @@ from typing import Optional
 from constants import *
 import traceback
 
-# TODO: #
-# When event is cancelled, it should send notification to admin
-# Same for other types of notifications
-
 router = APIRouter()
 
 # Query used to get an org's approved events whose end date or
@@ -161,8 +157,10 @@ def manual_process_event_request(req_id: int):
             detail="Unable to approve event."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Cancel a pending/approved event
@@ -183,8 +181,10 @@ def manual_process_event_request(req_id: int):
             detail="Unable to cancel event."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Manually deny event
@@ -207,8 +207,10 @@ def manual_process_event_request(req_id: int, data: DenialReason):
             detail="Unable to deny event."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Auto-approve/deny event request
@@ -239,8 +241,11 @@ def auto_process_event_request(req_id: int):
             status_code=500,
             detail="Unable to process event."
         )
-    cursor.close()
-    connection.close()
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
     return output
 
 
@@ -328,8 +333,10 @@ def create_event_request(data: EventData):
             detail="Unable to create event request."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get all pending events for an organization
@@ -357,8 +364,10 @@ def get_pending_requests(org_id: int):
             detail="Unable to get pending events."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get all pending and approved events in the current month or
@@ -390,8 +399,10 @@ def get_events(org_id: int, month: int, year: int):
             detail="Unable to get events."
         )
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 # Get all approved events requested by a particular user whose
@@ -422,42 +433,7 @@ def get_user_req_events(user_id):
             detail="Unable to get events."
         )
     finally:
-        cursor.close()
-        connection.close()
-
-
-# Get all pending/approved events requested by a specific user
-# TODO: Change 'My Events' so that instead of hitting this endpoint,
-#       the front end gets user's events from cached event data.
-#       This way past events that are still recurring will appear
-#       in 'My Events'.
-#       'Cancel Event' also needs to be able to remove recurring past events
-#       from the cached event data in addition to setting the status of the event
-#       so that it isn't returned anymore by monthly request.
-@router.get("/events/user/{user_id}/{current_date}")
-def get_pending_requests(user_id: int, current_date: date):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        cursor.execute("""
-            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time,
-                   E.is_recurring, E.recurrence_type, E.recurrence_end_date,
-                   E.date_approved
-            FROM events E
-            JOIN venues V ON E.venue_id = V.id
-            JOIN spaces S ON E.space_id = S.id
-            WHERE E.requesting_user_id = %s
-            AND E.request_status_id IN %s
-            AND E.end_time::date >= %s
-        """, (user_id, (APPROVED, PENDING), current_date))
-        rows = cursor.fetchall()
-        return rows
-    except Exception:
-        connection.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Unable to get events."
-        )
-    finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()

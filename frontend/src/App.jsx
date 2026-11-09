@@ -6,9 +6,12 @@ import Dashboard from "./components/Dashboard";
 
 /*
   TODO:
+  - Add venue tabs and is_set col to events table.
+    Venue tabs should filter cached event data to display in events table.
+    Staff accounts are able to mark an unset event as set.
   - Analytics module
-  - Add is_set to event table and let it be marked by staff users
   - Test all endpoints
+  - Host with render
 */
 
 export default function App() {

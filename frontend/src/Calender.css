@@ -160,6 +160,13 @@
   background: #e6e7ff;
 }
 
+/* Today's date when selected */
+.calendar-day.today.selected {
+  background: #6366d9;
+  border: 2px solid #2563eb;
+  color: #ffffff;
+}
+
 /* Responsive calendar */
 
 @media (max-width: 1000px) {

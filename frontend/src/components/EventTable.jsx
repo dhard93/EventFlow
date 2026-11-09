@@ -3,12 +3,12 @@ import '../EventTable.css';
 // Add resource counts and is_set to cols/endpoint
 export default function EventTable({ selectedDayEvents = [] }) {
   const columns = [
-    { label: "Title", index: 0, width: "16%" },
-    { label: "Venue", index: 1, width: "12%" },
-    { label: "Space", index: 2, width: "12%" },
-    { label: "Start Time", index: 3, width: "14%" },
-    { label: "End Time", index: 4, width: "14%" },
-    { label: "Description", index: 5, width: "32%" },
+    { label: "Title", index: 2, width: "16%" },
+    { label: "Venue", index: 3, width: "12%" },
+    { label: "Space", index: 4, width: "12%" },
+    { label: "Start Time", index: 5, width: "14%" },
+    { label: "End Time", index: 6, width: "14%" },
+    { label: "Description", index: 7, width: "32%" },
   ];
 
   function formatTime(timestamp) {
@@ -72,7 +72,7 @@ export default function EventTable({ selectedDayEvents = [] }) {
                 <tr key={`${event[0]}-${event[3]}-${index}`}>
                   {columns.map((column) => (
                     <td key={column.index}>
-                      {column.index === 3 || column.index === 4
+                      {column.index === 5 || column.index === 6
                         ? formatTime(event[column.index])
                         : event[column.index] == null || event[column.index] === ""
                           ? "—"

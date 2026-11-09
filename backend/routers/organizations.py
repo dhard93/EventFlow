@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Body, Response, Request
+from fastapi import APIRouter, Response, Request, HTTPException
 from database import get_db_connection
 from security import *
 from pydantic import BaseModel
+import traceback
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ def get_user_org_name(user_id: int):
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Unable to mark notification as read."
+            detail="Unable to get organization."
         )
     finally:
         if cursor:
@@ -89,6 +90,7 @@ def add_org(data: CreateOrg, response: Response):
 
     except Exception:
         connection.rollback()
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail="Unable to create organization."
