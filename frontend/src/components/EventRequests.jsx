@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import "../EventRequests.css";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 // Change this to match the route decorator for auto_process_event_request.
 const AUTO_PROCESS_URL = (reqId) =>

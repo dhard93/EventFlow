@@ -2,7 +2,6 @@
 import '../Dashboard.css';
 import { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
-import StaffSidebar from "./StaffSidebar";
 import GuestSidebar from "./GuestSidebar";
 import Calendar from './Calender';
 import EventTable from "./EventTable";
@@ -16,7 +15,7 @@ import MyAccount from "./MyAccount";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
 import MyOrganization from "./MyOrganization";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 function matchesMonthlyWeekday(dateKey, startDate) {
   const [sy, sm, sd] = startDate.split("-").map(Number);

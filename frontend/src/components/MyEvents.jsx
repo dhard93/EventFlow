@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 import "../MyEvents.css";
 
 const CANCEL_EVENT_URL = (eventId) =>

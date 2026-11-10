@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import "../Dashboard.css";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 export default function Conversations({
   conversations = [],

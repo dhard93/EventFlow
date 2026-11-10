@@ -1,7 +1,7 @@
 
 import '../AddVenue.css';
 import { useEffect, useState } from "react";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 const SPACE_FIELDS = [
   "name",

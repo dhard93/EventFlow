@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 import "../Register.css";
 
 export default function RegisterUser({ onRegister, organizationId }) {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../Login.css";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [email, setEmail] = useState("");
