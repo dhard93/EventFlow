@@ -9,7 +9,6 @@ export default function RegisterUser({ onRegister, organizationId }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [accountTypeId, setAccountTypeId] = useState("2");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -35,7 +34,7 @@ export default function RegisterUser({ onRegister, organizationId }) {
         password: password.trim(),
         f_name: firstName.trim(),
         l_name: lastName.trim(),
-        account_type_id: Number(accountTypeId)
+        account_type_id: 2
       };
 
       const response = await fetch("http://localhost:8000/users", {
@@ -57,7 +56,7 @@ export default function RegisterUser({ onRegister, organizationId }) {
 
       onRegister?.({
           user_id: result.user_id,
-          account_type: Number(accountTypeId),
+          account_type: accountTypeId,
           organization_id: organizationId,
           organization_name: result.organization_name,
           admin_id: result.admin_id
@@ -112,34 +111,6 @@ export default function RegisterUser({ onRegister, organizationId }) {
                 onChange={(e) => setLastName(e.target.value)}
                 required
               />
-            </div>
-          </div>
-
-          <div className="register-field">
-            <label>Account type</label>
-
-            <div className="account-type-options">
-              <label>
-                <input
-                  type="radio"
-                  name="accountType"
-                  value="2"
-                  checked={accountTypeId === "2"}
-                  onChange={(e) => setAccountTypeId(e.target.value)}
-                />
-                Staff
-              </label>
-
-              <label>
-                <input
-                  type="radio"
-                  name="accountType"
-                  value="3"
-                  checked={accountTypeId === "3"}
-                  onChange={(e) => setAccountTypeId(e.target.value)}
-                />
-                Guest
-              </label>
             </div>
           </div>
 

@@ -398,9 +398,9 @@ def get_messagable_users(org_id: int, user_id: int):
             connection.close()
 
 
-# Get all guest/staff users for an org
+# Get all guest users for an org
 @router.get("/users/{org_id}")
-def get_staff_and_guests(org_id: int):
+def get_guests(org_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
@@ -408,9 +408,9 @@ def get_staff_and_guests(org_id: int):
             SELECT id, f_name || ' ' || l_name AS name
             FROM users
             WHERE org_id = %s AND
-            account_type_id <> %s
+            account_type_id = %s
             ORDER BY l_name ASC
-        """, (org_id, ADMIN))
+        """, (org_id, GUEST))
         rows = cursor.fetchall()
         return [
             {

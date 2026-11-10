@@ -16,8 +16,7 @@ USER_ACCT_UPDATED = 4
 
 # User account types
 ADMIN = 1
-STAFF = 2
-GUEST = 3
+GUEST = 2
 
 # Table enums for multi-row update queries
 VENUES = "venues"
