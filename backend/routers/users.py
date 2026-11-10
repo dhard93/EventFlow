@@ -133,8 +133,8 @@ def login(data: LoginRequest, response: Response):
             key="eventflow_session",
             value=token,
             httponly=True,
-            secure=False,
-            samesite="lax",
+            secure=True,
+            samesite="none",
             max_age=7 * 24 * 60 * 60,
             path="/",
         )
@@ -179,8 +179,8 @@ def logout(request: Request, response: Response):
                 key="eventflow_session",
                 path="/",
                 httponly=True,
-                secure=False,
-                samesite="lax",
+                secure=True,
+                samesite="none",
             )
             if cursor:
                 cursor.close()
