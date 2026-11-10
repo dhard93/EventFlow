@@ -1,11 +1,6 @@
 import { useState } from "react";
 import "../Login.css";
-
-/*
-TODO:
-  - Create 3 dashboard versions and on successful login,
-    get user's account type and show correct dashboard.
-*/
+import { API_URL } from "./config";
 
 export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [email, setEmail] = useState("");
@@ -25,7 +20,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
       };
 
       const response = await fetch(
-        "http://localhost:8000/users/login",
+        `${API_URL}/users/login`,
         {
           method: "POST",
           credentials: "include",

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { API_URL } from "./config";
 import "../Register.css";
 
 export default function RegisterUser({ onRegister, organizationId }) {
@@ -37,7 +38,7 @@ export default function RegisterUser({ onRegister, organizationId }) {
         account_type_id: 2
       };
 
-      const response = await fetch("http://localhost:8000/users", {
+      const response = await fetch(`${API_URL}/users`, {
           method: "POST",
           credentials: "include",
           headers: {

@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { API_URL } from "./config";
 import "../MyAccount.css";
 
 export default function MyAccount({
@@ -29,7 +30,7 @@ export default function MyAccount({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/users/account/${organizationId}/${userId}`,
+          `${API_URL}/users/account/${organizationId}/${userId}`,
           { signal: controller.signal }
         );
 
@@ -85,7 +86,7 @@ export default function MyAccount({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/users/${organizationId}/${userId}`,
+        `${API_URL}/users/${organizationId}/${userId}`,
         {
           method: "PUT",
           headers: {

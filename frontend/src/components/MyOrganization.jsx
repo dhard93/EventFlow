@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "./config";
 import "../MyOrganization.css";
 import AddVenue from "./AddVenue";
-
-const API_BASE = "http://localhost:8000";
 
 export default function MyOrganization({
   organizationId,
@@ -41,13 +40,13 @@ export default function MyOrganization({
 
       try {
         const [venuesResponse, usersResponse] = await Promise.all([
-          fetch(`${API_BASE}/venues/all/${organizationId}`, {
+          fetch(`${API_URL}/venues/all/${organizationId}`, {
             method: "GET",
             credentials: "include",
             signal: controller.signal,
           }),
 
-          fetch(`${API_BASE}/users/${organizationId}`, {
+          fetch(`${API_URL}/users/${organizationId}`, {
             method: "GET",
             credentials: "include",
             signal: controller.signal,
@@ -102,7 +101,7 @@ export default function MyOrganization({
     setMessage("");
 
     try {
-      const response = await fetch(`${API_BASE}/organizations`, {
+      const response = await fetch(`${API_URL}/organizations`, {
         method: "PATCH",
         credentials: "include",
         headers: {
@@ -145,7 +144,7 @@ export default function MyOrganization({
 
     try {
       const response = await fetch(
-        `${API_BASE}/organizations/${organizationId}`,
+        `${API_URL}/organizations/${organizationId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -174,7 +173,7 @@ export default function MyOrganization({
 
     try {
       const response = await fetch(
-        `${API_BASE}/users/${user.id}`,
+        `${API_URL}/users/${user.id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -497,7 +496,7 @@ export default function MyOrganization({
                 onSubmit={async () => {
                   try {
                     const response = await fetch(
-                      `${API_BASE}/venues/all/${organizationId}`,
+                      `${API_URL}/venues/all/${organizationId}`,
                       {
                         method: "GET",
                         credentials: "include",

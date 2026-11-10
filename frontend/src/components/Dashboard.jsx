@@ -16,6 +16,7 @@ import MyAccount from "./MyAccount";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
 import MyOrganization from "./MyOrganization";
+import { API_URL } from "./config";
 
 function matchesMonthlyWeekday(dateKey, startDate) {
   const [sy, sm, sd] = startDate.split("-").map(Number);
@@ -144,7 +145,7 @@ export default function Dashboard({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/events/approved/${organizationId}/${month}/${year}`,
+          `${API_URL}/events/approved/${organizationId}/${month}/${year}`,
           { signal: controller.signal }
         );
 
@@ -176,7 +177,7 @@ export default function Dashboard({
     async function fetchMyEvents() {
       try {
         const response = await fetch(
-          `http://localhost:8000/events/user/${userId}`,
+          `${API_URL}/events/user/${userId}`,
           {
             credentials: "include",
             signal: controller.signal,
@@ -218,7 +219,7 @@ export default function Dashboard({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/conversations/${userId}`,
+        `${API_URL}/conversations/${userId}`,
         {
           method: "GET",
           credentials: "include",

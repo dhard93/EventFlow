@@ -1,8 +1,7 @@
 
 import '../AddVenue.css';
 import { useEffect, useState } from "react";
-
-const API_BASE = "http://localhost:8000";
+import { API_URL } from "./config";
 
 const SPACE_FIELDS = [
   "name",
@@ -59,7 +58,7 @@ export default function AddVenue({
 
       try {
         const response = await fetch(
-          `${API_BASE}/venues/${venueId}`,
+          `${API_URL}/venues/${venueId}`,
           {
             method: "GET",
             credentials: "include",
@@ -290,8 +289,8 @@ export default function AddVenue({
 
       const response = await fetch(
         isEditing
-          ? `${API_BASE}/venues/${venueId}`
-          : `${API_BASE}/venues`,
+          ? `${API_URL}/venues/${venueId}`
+          : `${API_URL}/venues`,
         {
           method: isEditing ? "PATCH" : "POST",
           headers: {

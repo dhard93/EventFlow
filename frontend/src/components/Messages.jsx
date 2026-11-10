@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from "react";
 import "../Messages.css";
-
-const API_URL = "http://localhost:8000";
+import { API_URL } from "./config";
 
 export default function Messages({
   conversation,

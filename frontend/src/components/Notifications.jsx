@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { API_URL } from "./config";
 import "../Notifications.css";
-
-const API_URL = "http://localhost:8000";
 
 export default function Notifications({
   userId,

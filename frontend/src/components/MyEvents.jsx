@@ -1,9 +1,9 @@
-
 import { useState } from "react";
+import { API_URL } from "./config";
 import "../MyEvents.css";
 
 const CANCEL_EVENT_URL = (eventId) =>
-  `http://localhost:8000/events/cancel/${eventId}`;
+  `${API_URL}/events/cancel/${eventId}`;
 
 const COLUMNS = [
   { key: "title", label: "Event title" },

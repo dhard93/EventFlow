@@ -3,6 +3,7 @@ import Login from "./components/Login";
 import RegisterUser from "./components/RegisterUser";
 import RegisterOrg from "./components/RegisterOrg";
 import Dashboard from "./components/Dashboard";
+import { API_URL } from "./config";
 
 /*
   TODO:
@@ -31,7 +32,7 @@ export default function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/events/pending/${organizationId}`,
+        `${API_URL}/events/pending/${organizationId}`,
         { credentials: "include" }
       );
 
@@ -57,7 +58,7 @@ export default function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/notifications/unread/${userId}`,
+        `${API_URL}/notifications/unread/${userId}`,
         {
           method: "GET",
           credentials: "include",
@@ -88,7 +89,7 @@ export default function App() {
     async function restoreSession() {
       try {
         const response = await fetch(
-          "http://localhost:8000/users/sessions/me",
+          "${API_URL}/users/sessions/me",
           {
             method: "GET",
             credentials: "include",
@@ -132,7 +133,7 @@ export default function App() {
   const logout = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/users/logout",
+          "${API_URL}/users/logout",
           {
             method: "POST",
             credentials: "include",

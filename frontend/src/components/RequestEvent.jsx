@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { API_URL } from "./config";
 import "../RequestEvent.css";
 
 const RECURRENCE_OPTIONS = [
@@ -76,7 +77,7 @@ export default function RequestEvent({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/venues/all/${organizationId}`,
+          `${API_URL}/venues/all/${organizationId}`,
           {
             credentials: "include",
             signal: controller.signal,
@@ -128,7 +129,7 @@ export default function RequestEvent({
 
       try {
         const response = await fetch(
-          `http://localhost:8000/spaces/${venueId}`,
+          `${API_URL}/spaces/${venueId}`,
           {
             credentials: "include",
             signal: controller.signal,
@@ -238,7 +239,7 @@ export default function RequestEvent({
             };
 
             const response = await fetch(
-                "http://localhost:8000/events",
+                `${API_URL}/events`,
                 {
                     method: "POST",
                     credentials: "include",

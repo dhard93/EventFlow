@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { API_URL } from "./config";
 import "../Register.css";
 
 export default function RegisterOrg({
@@ -40,7 +41,7 @@ export default function RegisterOrg({
         l_name: lastName.trim(),
       };
 
-      const response = await fetch("http://localhost:8000/organizations", {
+      const response = await fetch(`${API_URL}/organizations`, {
           method: "POST",
           credentials: "include",
           headers: {
