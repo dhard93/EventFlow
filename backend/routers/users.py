@@ -97,6 +97,7 @@ class LoginRequest(BaseModel):
 
 @router.post("/users/login")
 def login(data: LoginRequest, response: Response):
+    print("LOGIN ENDPOINT HIT")
     connection = get_db_connection()
     cursor = connection.cursor()
 

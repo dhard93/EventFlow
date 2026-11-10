@@ -89,7 +89,7 @@ export default function App() {
     async function restoreSession() {
       try {
         const response = await fetch(
-          "${API_URL}/users/sessions/me",
+          `${API_URL}/users/sessions/me`,
           {
             method: "GET",
             credentials: "include",
@@ -133,7 +133,7 @@ export default function App() {
   const logout = async () => {
       try {
         const response = await fetch(
-          "${API_URL}/users/logout",
+          `${API_URL}/users/logout`,
           {
             method: "POST",
             credentials: "include",
