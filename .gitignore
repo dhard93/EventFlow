@@ -10,6 +10,7 @@ compose.override.yaml
 # Local environment files
 .env
 .env.*
+**/env/
 !.env.example
 
 # Docker build and runtime artifacts
@@ -26,6 +27,7 @@ venv/
 env/
 ENV/
 virtualenv/
+**/venv/
 
 # =========================
 # Python cache and artifacts
@@ -56,5 +58,5 @@ Thumbs.db
 # =========================
 # React Dist
 # =========================
-
+**/dist/
 dist/
