@@ -7,10 +7,15 @@ import { API_URL } from "./config";
 
 /*
   TODO:
+  - Change it so that user session is only run AFTER logging in/registering
+  - Implement session storage to prevent repeated queries on reload
   - Analytics module
+  - Add loading screens
+  - Add popups for invalid login and confirmations
+  - Make dashboard have mobile screen size
   - Implement web sockets
+  - Organize css files
   - Test all endpoints
-  - Host with render
 */
 
 export default function App() {
@@ -87,6 +92,13 @@ export default function App() {
   // Restore the login session whenever the app first loads.
   useEffect(() => {
     async function restoreSession() {
+      const hasSession = sessionStorage.getItem("hasSession");
+
+      if (!hasSession) {
+        setIsCheckingSession(false);
+        return;
+      }
+
       try {
         const response = await fetch(
           `${API_URL}/users/sessions/me`,

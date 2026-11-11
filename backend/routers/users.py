@@ -138,6 +138,8 @@ def login(data: LoginRequest, response: Response):
             max_age=7 * 24 * 60 * 60,
             path="/",
         )
+        cookie = response.headers.get("set-cookie")
+        response.headers["set-cookie"] = cookie + "; Partitioned"
 
         return {
             "user_id": user[0],
@@ -182,6 +184,8 @@ def logout(request: Request, response: Response):
                 secure=True,
                 samesite="none",
             )
+            cookie = response.headers.get("set-cookie")
+            response.headers["set-cookie"] = cookie + "; Partitioned"
             if cursor:
                 cursor.close()
             if connection:
