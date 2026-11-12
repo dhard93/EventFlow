@@ -292,11 +292,7 @@ def add_user(data: UserData):
             )
 
         connection.commit()
-        return {
-            "user_id": user[0],
-            "organization_name": admin[0],
-            "admin_id": admin[1]
-        }
+        return {"message":"User successfully created."}
     except HTTPException:
         connection.rollback()
         raise
