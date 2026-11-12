@@ -94,11 +94,6 @@ export default function App() {
     async function restoreSession() {
       const hasSession = sessionStorage.getItem("hasSession");
 
-      if (!hasSession) {
-        setIsCheckingSession(false);
-        return;
-      }
-
       try {
         const response = await fetch(
           `${API_URL}/users/sessions/me`,
