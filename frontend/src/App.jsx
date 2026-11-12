@@ -3,16 +3,12 @@ import Login from "./components/Login";
 import RegisterUser from "./components/RegisterUser";
 import RegisterOrg from "./components/RegisterOrg";
 import Dashboard from "./components/Dashboard";
+import LoadingOverlay from "./components/LoadingOverlay";
 import { API_URL } from "./config";
 
 /*
   TODO:
-  - Change it so that user session is only run AFTER logging in/registering
-  - Implement session storage to prevent repeated queries on reload
   - Analytics module
-  - Add loading screens
-  - Add popups for invalid login and confirmations
-  - Make dashboard have mobile screen size
   - Implement web sockets
   - Organize css files
   - Test all endpoints
@@ -173,7 +169,12 @@ export default function App() {
 
   // Avoid briefly showing the login screen before checking the cookie.
   if (isCheckingSession) {
-    return <div>Checking your session...</div>;
+    return (
+      <LoadingOverlay
+        isLoading={true}
+        message="Checking your session..."
+      />
+    );
   }
 
   if (page === "register-org") {

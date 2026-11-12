@@ -12,6 +12,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [error, setError] = useState("");
 
   async function handleSubmit(event) {
+    setError("");
     event.preventDefault();
     setMessage("");
     setIsLoading(true);
@@ -35,12 +36,15 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
       );
 
       const result = await response.json();
-      console.log(result);
 
       if (!response.ok) {
-        setError(`Request failed: ${response.status}`);
+        if (response.status === 401 || response.status === 403) {
+          setError("Invalid email or password. Please try again.");
+        } else {
+          setError("Unable to sign in. Please try again later.");
+        }
         return;
-      }      
+      }
 
       if (onLogin) {
         onLogin({
@@ -131,6 +135,13 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className="login-error" role="alert">
+              <span className="login-error-icon">!</span>
+              <span>{error}</span>
+            </div>
+          )}
 
           <button className="login-submit" type="submit">
             Sign in <span aria-hidden="true">→</span>
