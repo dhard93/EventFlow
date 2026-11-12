@@ -1,17 +1,20 @@
 import { useState } from "react";
 import "../Login.css";
 import { API_URL } from "../config";
+import LoadingOverlay from "./LoadingOverlay";
 
 export default function Login({ onLogin, onCreateOrganizationClick }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
+    setIsLoading(true);
 
     try {
       const loginData = {
@@ -54,7 +57,7 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
       console.error("Login error:", err);
       setError(err.message || "An unexpected error occurred.");
     } finally {
-      // Runs after success, failure, or an early return.
+      setIsLoading(false);
     }
   }
 
@@ -71,6 +74,10 @@ export default function Login({ onLogin, onCreateOrganizationClick }) {
 
   return (
     <main className="login-page">
+      <LoadingOverlay
+        isLoading={isLoading}
+        message="Signing you in..."
+      />
       <section className="login-card">
         <div className="login-brand">
           <div className="login-brand-mark">E</div>

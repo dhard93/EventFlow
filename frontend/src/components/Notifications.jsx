@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 import "../Notifications.css";
 
@@ -11,6 +12,7 @@ export default function Notifications({
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const [error, setError] = useState("");
+  const isProcessing = loading || processingId !== null;
 
   const fetchNotifications = useCallback(async () => {
     if (!userId) {
@@ -104,6 +106,7 @@ export default function Notifications({
         }
       }}
     >
+      {isProcessing && <LoadingOverlay />}
       <section
         className="notifications-card"
         role="dialog"
@@ -138,11 +141,7 @@ export default function Notifications({
             </p>
           )}
 
-          {loading ? (
-            <p className="notifications-info">
-              Loading notifications…
-            </p>
-          ) : notifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <div className="notifications-empty">
               <span className="notifications-empty-mark">
                 ✓
@@ -171,7 +170,7 @@ export default function Notifications({
                     </span>
 
                     <span className="notification-item-action">
-                      {busy ? "Marking read…" : " "}
+                      {" "}
                     </span>
                   </button>
                 );

@@ -15,6 +15,7 @@ import MyAccount from "./MyAccount";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
 import MyOrganization from "./MyOrganization";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 
 function matchesMonthlyWeekday(dateKey, startDate) {
@@ -115,10 +116,10 @@ export default function Dashboard({
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
-  const [conversationsLoading, setConversationsLoading] = useState(false);
   const [conversationsError, setConversationsError] = useState(null);
   const [today] = useState(() => new Date());
   const [showMyOrganization, setShowMyOrganization] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [currentMonth, setCurrentMonth] = useState(() =>
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -157,6 +158,8 @@ export default function Dashboard({
         if (error.name === "AbortError") return;
         console.error("Error fetching events:", error);
         setEventsError(error.message);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -198,6 +201,8 @@ export default function Dashboard({
         if (error.name === "AbortError") return;
 
         console.error("Error fetching My Events:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -213,7 +218,6 @@ export default function Dashboard({
       return;
     }
 
-    setConversationsLoading(true);
     setConversationsError(null);
 
     try {
@@ -245,9 +249,7 @@ export default function Dashboard({
       console.error("Error fetching conversations:", error);
       setConversationsError(error.message);
     } finally {
-      if (!signal?.aborted) {
-        setConversationsLoading(false);
-      }
+        setIsLoading(false);
     }
   }
 
@@ -309,6 +311,13 @@ export default function Dashboard({
 
   return (
     <div className="app-layout">
+      {
+        <LoadingOverlay
+          isLoading={isLoading}
+          message="Loading dashboard..."
+        />
+      }
+
       {accountType === 1 && (
         <AdminSidebar
           logout={logout}
@@ -369,7 +378,6 @@ export default function Dashboard({
 
             <Conversations
               conversations={conversations}
-              loading={conversationsLoading}
               error={conversationsError}
               organizationId={organizationId}
               userId={userId}

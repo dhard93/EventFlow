@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 import "../EventRequests.css";
 import { API_URL } from "../config";
 
@@ -188,6 +189,14 @@ export default function EventRequests({ organizationId, onClose, onPendingReques
 
   return (
     <main className="event-requests-page">
+      <LoadingOverlay
+        isLoading={loading || processingId !== null}
+        message={
+          processingId !== null
+            ? "Processing event request..."
+            : "Loading event requests..."
+        }
+      />
       <section className="event-requests-card">
         <header className="event-requests-header">
           <div className="event-requests-brand">
@@ -222,9 +231,7 @@ export default function EventRequests({ organizationId, onClose, onPendingReques
           </p>
         )}
 
-        {loading ? (
-          <p className="event-requests-state">Loading event requests…</p>
-        ) : requests.length === 0 ? (
+        {loading ? null : requests.length === 0 ? (
           <div className="event-requests-empty">
             <span className="event-requests-empty-icon" aria-hidden="true">
               ✓
@@ -285,7 +292,7 @@ export default function EventRequests({ organizationId, onClose, onPendingReques
                             disabled={anyBusy}
                             onClick={() => processRequest(request.id, "approve")}
                           >
-                            {busy ? "Working…" : "Approve"}
+                            Approve
                           </button>
 
                           <button
@@ -423,9 +430,7 @@ export default function EventRequests({ organizationId, onClose, onPendingReques
                     processingId !== null || !denialReason.trim()
                     }
                 >
-                    {processingId === denialRequest.id
-                    ? "Submitting..."
-                    : "Submit Denial"}
+                    Submit Denial
                 </button>
                 </div>
             </form>

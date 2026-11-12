@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import "../Messages.css";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 
 export default function Messages({
@@ -236,9 +237,9 @@ export default function Messages({
           )}
 
           {loading ? (
-            <p className="messages-info">
-              Loading messages...
-            </p>
+            <div className="messages-loading">
+              <LoadingOverlay />
+            </div>
           ) : messages.length === 0 ? (
             <div className="messages-empty">
               <div className="messages-empty-mark">E</div>

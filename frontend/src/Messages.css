@@ -461,3 +461,13 @@
     padding-inline: 0.8rem;
   }
 }
+
+.messages-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+.messages-content {
+  position: relative;
+}

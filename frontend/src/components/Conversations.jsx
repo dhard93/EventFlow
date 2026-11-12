@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import "../Dashboard.css";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 
 export default function Conversations({
@@ -16,16 +17,15 @@ export default function Conversations({
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [message, setMessage] = useState("");
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [sending, setSending] = useState(false);
   const [composeError, setComposeError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function openCompose() {
     setShowCompose(true);
     setComposeError("");
     setSelectedUser("");
     setMessage("");
-    setLoadingUsers(true);
+    setIsLoading(true);
 
     try {
       const response = await fetch(
@@ -42,12 +42,12 @@ export default function Conversations({
     } catch (err) {
       setComposeError(err.message);
     } finally {
-      setLoadingUsers(false);
+      setIsLoading(false);
     }
   }
 
   function closeCompose() {
-    if (sending) return;
+    if (isLoading) return;
 
     setShowCompose(false);
     setComposeError("");
@@ -58,7 +58,7 @@ export default function Conversations({
 
     if (!selectedUser || !message.trim()) return;
 
-    setSending(true);
+    setIsLoading(true);
     setComposeError("");
 
     try {
@@ -151,15 +151,19 @@ export default function Conversations({
       onConversationSent?.(conversation);
 
     } catch (err) {
-      console.error("Error sending message:", err);
+      console.error("Error isLoading message:", err);
       setComposeError(err.message);
     } finally {
-      setSending(false);
+      setIsLoading(false);
     }
   }
 
   return (
     <>
+      <LoadingOverlay
+        isLoading={isLoading}
+        message="Please wait..."
+      />
       <section className="upcoming-panel conversations-panel">
         <div className="conversations-heading">
           <div>
@@ -241,7 +245,7 @@ export default function Conversations({
                 type="button"
                 className="compose-close"
                 onClick={closeCompose}
-                disabled={sending}
+                disabled={isLoading}
                 aria-label="Close"
               >
                 &times;
@@ -251,28 +255,21 @@ export default function Conversations({
             <form onSubmit={handleSendMessage}>
               <div className="compose-field">
                 <label htmlFor="message-recipient">To</label>
+                <select
+                  id="message-recipient"
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  disabled={isLoading}
+                  required
+                >
+                  <option value="">Select a recipient</option>
 
-                {loadingUsers ? (
-                  <p className="compose-info">
-                    Loading organization users...
-                  </p>
-                ) : (
-                  <select
-                    id="message-recipient"
-                    value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
-                    disabled={sending}
-                    required
-                  >
-                    <option value="">Select a recipient</option>
-
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="compose-field">
@@ -285,7 +282,7 @@ export default function Conversations({
                   placeholder="Write your message..."
                   rows={6}
                   maxLength={5000}
-                  disabled={sending}
+                  disabled={isLoading}
                   required
                 />
 
@@ -305,7 +302,7 @@ export default function Conversations({
                   type="button"
                   className="compose-cancel"
                   onClick={closeCompose}
-                  disabled={sending}
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
@@ -314,13 +311,12 @@ export default function Conversations({
                   type="submit"
                   className="compose-send"
                   disabled={
-                    sending ||
-                    loadingUsers ||
+                    isLoading ||
                     !selectedUser ||
                     !message.trim()
                   }
                 >
-                  {sending ? "Sending..." : "Send Message"}
+                  {isLoading ? "Sending..." : "Send Message"}
                 </button>
               </footer>
             </form>

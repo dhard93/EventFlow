@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
+import LoadingOverlay from "./LoadingOverlay";
 import "../MyOrganization.css";
 import AddVenue from "./AddVenue";
 
@@ -24,6 +25,7 @@ export default function MyOrganization({
   const [isEditingName, setIsEditingName] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const isProcessing = loading || savingName || deletingUser || deletingOrg;
 
   useEffect(() => {
     setName(organizationName || "");
@@ -208,6 +210,7 @@ export default function MyOrganization({
       className="my-organizations-overlay"
       onClick={onClose}
     >
+      {isProcessing && <LoadingOverlay />}
       <div
         className="my-organizations-card"
         onClick={(e) => e.stopPropagation()}
@@ -247,233 +250,224 @@ export default function MyOrganization({
               {message}
             </p>
           )}
+          {/* ORGANIZATION SECTION */}
 
-          {loading ? (
-            <p className="my-organizations-info">
-              Loading organization information...
-            </p>
-          ) : (
-            <>
-              {/* ORGANIZATION SECTION */}
+          <section className="organization-section">
+            <div className="my-organizations-section-heading">
+              <div>
+                <h2>Organization</h2>
+                <p>Manage your organization details.</p>
+              </div>
+            </div>
 
-              <section className="organization-section">
-                <div className="my-organizations-section-heading">
-                  <div>
-                    <h2>Organization</h2>
-                    <p>Manage your organization details.</p>
-                  </div>
-                </div>
+            <div className="organization-name-field">
+              <label htmlFor="organization-name">
+                Organization Name
+              </label>
 
-                <div className="organization-name-field">
-                  <label htmlFor="organization-name">
-                    Organization Name
-                  </label>
+              <div className="organization-name-controls">
+                <input
+                  id="organization-name"
+                  type="text"
+                  value={name}
+                  disabled={!isEditingName || savingName}
+                  onChange={(e) => setName(e.target.value)}
+                />
 
-                  <div className="organization-name-controls">
-                    <input
-                      id="organization-name"
-                      type="text"
-                      value={name}
-                      disabled={!isEditingName || savingName}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-
-                    {!isEditingName ? (
-                      <button
-                        type="button"
-                        className="my-organizations-secondary"
-                        onClick={() => {
-                          setError("");
-                          setMessage("");
-                          setIsEditingName(true);
-                        }}
-                      >
-                        Edit
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className="my-organizations-save"
-                          onClick={handleSaveName}
-                          disabled={savingName}
-                        >
-                          {savingName ? "Saving..." : "Save"}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="my-organizations-secondary"
-                          disabled={savingName}
-                          onClick={() => {
-                            setName(organizationName || "");
-                            setIsEditingName(false);
-                            setError("");
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="organization-danger-zone">
-                  <div>
-                    <strong>Delete Organization</strong>
-                    <p>
-                      Permanently delete this organization.
-                    </p>
-                  </div>
-
+                {!isEditingName ? (
                   <button
                     type="button"
-                    className="my-organizations-delete"
-                    onClick={handleDeleteOrganization}
-                    disabled={deletingOrg}
+                    className="my-organizations-secondary"
+                    onClick={() => {
+                      setError("");
+                      setMessage("");
+                      setIsEditingName(true);
+                    }}
                   >
-                    {deletingOrg ? "Deleting..." : "Delete Organization"}
+                    Edit
                   </button>
-                </div>
-              </section>
-
-              {/* VENUES SECTION */}
-
-              <section className="organization-list-section">
-                <div className="my-organizations-section-heading">
-                  <div>
-                    <h2>Venues</h2>
-                    <p>
-                      Select a venue to manage its information.
-                    </p>
-                  </div>
-
-                  <span className="my-organizations-count">
-                    {venues.length}
-                  </span>
-                </div>
-
-                {venues.length === 0 ? (
-                  <p className="my-organizations-info">
-                    No venues have been added to this organization.
-                  </p>
                 ) : (
-                  <div className="my-organizations-list">
-                    {venues.map((venue) => (
-                      <button
-                        type="button"
-                        key={venue.id}
-                        className={`my-organizations-list-button ${
-                          selectedVenue?.id === venue.id
-                            ? "selected"
-                            : ""
-                        }`}
-                        onClick={() => handleVenueClick(venue)}
-                      >
-                        <span className="organization-list-icon">
-                          ⌂
-                        </span>
+                  <>
+                    <button
+                      type="button"
+                      className="my-organizations-save"
+                      onClick={handleSaveName}
+                      disabled={savingName}
+                    >
+                      Save
+                    </button>
 
-                        <span className="organization-list-name">
-                          {venue.name}
-                        </span>
-
-                        <span className="organization-list-arrow">
-                          →
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                    <button
+                      type="button"
+                      className="my-organizations-secondary"
+                      disabled={savingName}
+                      onClick={() => {
+                        setName(organizationName || "");
+                        setIsEditingName(false);
+                        setError("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
                 )}
-              </section>
+              </div>
+            </div>
 
-              {/* USERS SECTION */}
+            <div className="organization-danger-zone">
+              <div>
+                <strong>Delete Organization</strong>
+                <p>
+                  Permanently delete this organization.
+                </p>
+              </div>
 
-              <section className="organization-list-section">
-                <div className="my-organizations-section-heading">
-                  <div>
-                    <h2>Users</h2>
-                    <p>
-                      Manage staff and guest accounts in your organization.
-                    </p>
-                  </div>
+              <button
+                type="button"
+                className="my-organizations-delete"
+                onClick={handleDeleteOrganization}
+                disabled={deletingOrg}
+              >
+                Delete Organization
+              </button>
+            </div>
+          </section>
 
-                  <span className="my-organizations-count">
-                    {users.length}
-                  </span>
-                </div>
+          {/* VENUES SECTION */}
 
-                {users.length === 0 ? (
-                  <p className="my-organizations-info">
-                    No additional users belong to this organization.
-                  </p>
-                ) : (
-                  <div className="my-organizations-list">
-                    {users.map((user) => (
-                      <div
-                        className="organization-user-row"
-                        key={user.id}
-                      >
-                        <button
-                          type="button"
-                          className={`my-organizations-list-button organization-user-button ${
-                            selectedUser?.id === user.id
-                              ? "selected"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            setSelectedUser(
-                              selectedUser?.id === user.id ? null : user
-                            )
-                          }
-                        >
-                          <span className="organization-list-icon">
-                            ♟
-                          </span>
+          <section className="organization-list-section">
+            <div className="my-organizations-section-heading">
+              <div>
+                <h2>Venues</h2>
+                <p>
+                  Select a venue to manage its information.
+                </p>
+              </div>
 
-                          <span className="organization-list-name">
-                            {user.name}
-                          </span>
+              <span className="my-organizations-count">
+                {venues.length}
+              </span>
+            </div>
 
-                          <span className="organization-list-arrow">
-                            {selectedUser?.id === user.id ? "−" : "+"}
-                          </span>
-                        </button>
+            {venues.length === 0 ? (
+              <p className="my-organizations-info">
+                No venues have been added to this organization.
+              </p>
+            ) : (
+              <div className="my-organizations-list">
+                {venues.map((venue) => (
+                  <button
+                    type="button"
+                    key={venue.id}
+                    className={`my-organizations-list-button ${
+                      selectedVenue?.id === venue.id
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() => handleVenueClick(venue)}
+                  >
+                    <span className="organization-list-icon">
+                      ⌂
+                    </span>
 
-                        {selectedUser?.id === user.id && (
-                          <div className="organization-user-actions">
-                            <span>
-                              Delete this user's account?
-                            </span>
+                    <span className="organization-list-name">
+                      {venue.name}
+                    </span>
 
-                            <div>
-                              <button
-                                type="button"
-                                className="my-organizations-delete"
-                                disabled={deletingUser}
-                                onClick={() => handleDeleteUser(user)}
-                              >
-                                {deletingUser ? "Deleting..." : "Delete User"}
-                              </button>
+                    <span className="organization-list-arrow">
+                      →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
 
-                              <button
-                                type="button"
-                                className="my-organizations-secondary"
-                                disabled={deletingUser}
-                                onClick={() => setSelectedUser(null)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
+          {/* USERS SECTION */}
+
+          <section className="organization-list-section">
+            <div className="my-organizations-section-heading">
+              <div>
+                <h2>Users</h2>
+                <p>
+                  Manage staff and guest accounts in your organization.
+                </p>
+              </div>
+
+              <span className="my-organizations-count">
+                {users.length}
+              </span>
+            </div>
+
+            {users.length === 0 ? (
+              <p className="my-organizations-info">
+                No additional users belong to this organization.
+              </p>
+            ) : (
+              <div className="my-organizations-list">
+                {users.map((user) => (
+                  <div
+                    className="organization-user-row"
+                    key={user.id}
+                  >
+                    <button
+                      type="button"
+                      className={`my-organizations-list-button organization-user-button ${
+                        selectedUser?.id === user.id
+                          ? "selected"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setSelectedUser(
+                          selectedUser?.id === user.id ? null : user
+                        )
+                      }
+                    >
+                      <span className="organization-list-icon">
+                        ♟
+                      </span>
+
+                      <span className="organization-list-name">
+                        {user.name}
+                      </span>
+
+                      <span className="organization-list-arrow">
+                        {selectedUser?.id === user.id ? "−" : "+"}
+                      </span>
+                    </button>
+
+                    {selectedUser?.id === user.id && (
+                      <div className="organization-user-actions">
+                        <span>
+                          Delete this user's account?
+                        </span>
+
+                        <div>
+                          <button
+                            type="button"
+                            className="my-organizations-delete"
+                            disabled={deletingUser}
+                            onClick={() => handleDeleteUser(user)}
+                          >
+                            Delete User
+                          </button>
+
+                          <button
+                            type="button"
+                            className="my-organizations-secondary"
+                            disabled={deletingUser}
+                            onClick={() => setSelectedUser(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </section>
-            </>
-          )}
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       </div>
         {selectedVenue && (

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
+import LoadingOverlay from "./LoadingOverlay";
 import "../MyAccount.css";
 
 export default function MyAccount({
@@ -154,9 +155,9 @@ export default function MyAccount({
 
         <div className="my-account-content">
           {loading ? (
-            <p className="my-account-info">
-              Loading account details...
-            </p>
+            <div className="my-account-loading">
+              <LoadingOverlay />
+            </div>
           ) : (
             <>
               {error && (

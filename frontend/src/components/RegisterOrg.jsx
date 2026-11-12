@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 import "../Register.css";
 
@@ -16,11 +17,13 @@ export default function RegisterOrg({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setMessage("");
+    setLoading(true);
 
     try {
       if (password.length < 8) {
@@ -75,7 +78,7 @@ export default function RegisterOrg({
       console.error("Registration error:", err);
       setError(err.message || "An unexpected error occurred.");
     } finally {
-      // Runs after success, failure, or an early return.
+      setLoading(false);
     }
   }
 
@@ -86,6 +89,7 @@ export default function RegisterOrg({
 
   return (
     <main className="register-page">
+      {loading && <LoadingOverlay />}
       <section className="register-card">
         <div className="register-brand">
           <div className="register-brand-mark">E</div>
@@ -209,7 +213,11 @@ export default function RegisterOrg({
             </p>
           )}
 
-          <button className="register-submit" type="submit">
+          <button
+            className="register-submit"
+            type="submit"
+            disabled={loading}
+          >
             Create organization <span aria-hidden="true">→</span>
           </button>
         </form>

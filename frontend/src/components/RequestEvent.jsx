@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 import "../RequestEvent.css";
 
@@ -45,6 +46,7 @@ export default function RequestEvent({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [venueError, setVenueError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const [resources, setResources] = useState({
   chairs: 0,
@@ -56,7 +58,6 @@ export default function RequestEvent({
 
   // Load the organization's venues.
   useEffect(() => {
-    console.log("Venue useEffect ran. organizationId:", organizationId);
     if (!organizationId) {
       setVenues([]);
       setVenueId("");
@@ -89,12 +90,7 @@ export default function RequestEvent({
         }
 
         const data = await response.json();
-
-        console.log("Organization ID:", organizationId);
-        console.log("Venues response:", data);
-
-
-        setVenues(data);
+        setVenues(Array.isArray(data) ? data : []);
       } catch (err) {
         if (err.name !== "AbortError") {
           setError(err.message || "Failed to load venues.");
@@ -168,115 +164,111 @@ export default function RequestEvent({
     setMessage("");
   }
 
-    async function handleSubmit(event) {
-        try {
-            event.preventDefault();
-            setError("");
-            setMessage("");
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-            if (!venueId || !spaceId) {
-                setError("Please select a venue and a space.");
-                return;
-            }
+    if (submitting) return;
 
-            if (
-                !startTime ||
-                !endTime ||
-                new Date(endTime) <= new Date(startTime)
-            ) {
-                setError("The end time must be after the start time.");
-                return;
-            }
+    setError("");
+    setMessage("");
 
-            if (isRecurring === "true") {
-              if (!recurrenceType || !recurrenceEndDate) {
-                setError(
-                  "Please select a recurrence type and end date."
-                );
-                return;
-              }
-
-              if (recurrenceEndDate < startTime.slice(0, 10)) {
-                setError(
-                  "The recurrence end date cannot be before the event start date."
-                );
-                return;
-              }
-
-              if (
-                !RECURRENCE_OPTIONS.some(
-                  (option) => option.value === recurrenceType
-                )
-              ) {
-                setError("Please select a valid recurrence type.");
-                return;
-              }
-            }
-
-            const eventData = {
-                admin_id: Number(adminId),
-                org_id: Number(organizationId),
-                venue_id: Number(venueId),
-                space_id: Number(spaceId),
-                requesting_user_id: Number(userId),
-                title: title.trim(),
-                description: description.trim() || null,
-                attendee_count: Number(attendeeCount),
-                start_time: startTime,
-                end_time: endTime,
-                is_recurring: isRecurring === "true",
-                recurrence_type:
-                    isRecurring === "true" ? recurrenceType : null,
-                recurrence_end_date:
-                    isRecurring === "true" ? recurrenceEndDate : null,
-                resources: {
-                    Chairs: Number(resources.chairs),
-                    Tables: Number(resources.tables),
-                    Microphones: Number(resources.microphones),
-                    Podiums: Number(resources.podiums),
-                    TVs: Number(resources.tvs),
-                },
-            };
-
-            const response = await fetch(
-                `${API_URL}/events`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(eventData),
-                }
-            );
-
-            if (!response.ok) {
-              const result = await response.json();
-
-              console.error("API error:", {
-                status: response.status,
-                response: result,
-                submittedData: eventData,
-              });
-
-              throw new Error(
-                typeof result.detail === "string"
-                  ? result.detail
-                  : JSON.stringify(result.detail ?? result)
-              );
-            }
-
-            setMessage("Event request submitted successfully.");
-            onRequest?.(eventData);
-
-        } catch (err) {
-            console.error("Event request failed:", err);
-            setError(err.message || "Failed to submit event request.");
-        }
+    if (!venueId || !spaceId) {
+      setError("Please select a venue and a space.");
+      return;
     }
+
+    if (!title.trim()) {
+      setError("Please enter an event title.");
+      return;
+    }
+
+    if (!attendeeCount || Number(attendeeCount) < 1) {
+      setError("Please enter at least one expected attendee.");
+      return;
+    }
+
+    if (
+      !startTime ||
+      !endTime ||
+      new Date(endTime) <= new Date(startTime)
+    ) {
+      setError("The end time must be after the start time.");
+      return;
+    }
+
+    if (isRecurring === "true") {
+      if (!recurrenceType || !recurrenceEndDate) {
+        setError("Please select a recurrence type and end date.");
+        return;
+      }
+
+      if (recurrenceEndDate < startTime.slice(0, 10)) {
+        setError("The recurrence end date cannot be before the event start date.");
+        return;
+      }
+    }
+
+    const eventData = {
+      admin_id: Number(adminId),
+      org_id: Number(organizationId),
+      venue_id: Number(venueId),
+      space_id: Number(spaceId),
+      requesting_user_id: Number(userId),
+      title: title.trim(),
+      description: description.trim() || null,
+      attendee_count: Number(attendeeCount),
+      start_time: startTime,
+      end_time: endTime,
+      is_recurring: isRecurring === "true",
+      recurrence_type:
+        isRecurring === "true" ? recurrenceType : null,
+      recurrence_end_date:
+        isRecurring === "true" ? recurrenceEndDate : null,
+      resources: {
+        Chairs: Number(resources.chairs),
+        Tables: Number(resources.tables),
+        Microphones: Number(resources.microphones),
+        Podiums: Number(resources.podiums),
+        TVs: Number(resources.tvs),
+      },
+    };
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/events`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result.detail === "string"
+            ? result.detail
+            : JSON.stringify(result.detail ?? result)
+        );
+      }
+
+      setMessage("Event request submitted successfully.");
+
+      onRequest?.(eventData);
+    } catch (err) {
+      console.error("Event request failed:", err);
+      setError(err.message || "Failed to submit event request.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <main className="request-event-page">
+      {submitting && <LoadingOverlay />}
       <section className="request-event-card">
         <header className="request-event-header">
           <div className="request-event-brand">
@@ -466,7 +458,7 @@ export default function RequestEvent({
                 End date and time
                 </label>
                 <input
-                    id="event-start"
+                    id="event-end"
                     type="datetime-local"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
@@ -624,11 +616,12 @@ export default function RequestEvent({
               disabled={
                 loadingVenues ||
                 loadingSpaces ||
+                submitting ||
                 !venueId ||
                 !spaceId
               }
             >
-              Submit Request <span aria-hidden="true">→</span>
+              {submitting ? "Submitting..." : "Submit Request"} <span aria-hidden="true">→</span>
             </button>
           </footer>
         </form>

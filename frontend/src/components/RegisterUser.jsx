@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { API_URL } from "../config";
+import LoadingOverlay from "./LoadingOverlay";
 import "../Register.css";
 
 export default function RegisterUser({ onRegister, organizationId }) {
@@ -12,11 +13,13 @@ export default function RegisterUser({ onRegister, organizationId }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
     setMessage("");
+    setIsLoading(true);
 
     try {
       if (password.length < 8) {
@@ -59,12 +62,16 @@ export default function RegisterUser({ onRegister, organizationId }) {
       console.error("User registration error:", err);
       setError(err.message || "An unexpected error occurred.");
     } finally {
-      // Runs after success, failure, or an early return.
+      setIsLoading(false);
     }
   }
 
   return (
     <main className="register-page">
+    <LoadingOverlay
+      isLoading={isLoading}
+      message="Creating user account..."
+    />
       <section className="register-card">
         <div className="register-brand">
           <div className="register-brand-mark">E</div>

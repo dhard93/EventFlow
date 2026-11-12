@@ -281,3 +281,14 @@
     background: #fff;
   }
 }
+
+.my-account-content {
+  position: relative;
+}
+
+.my-account-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  min-height: 200px;
+}
