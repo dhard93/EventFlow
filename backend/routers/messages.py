@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from database import get_db_connection
 from pydantic import BaseModel
+from sse_manager import send_to_user
 import traceback
 
 router = APIRouter()
@@ -36,21 +37,51 @@ def get_messages(conv_id: int):
 
 # Send a message in an existing conversation
 class MessageData(BaseModel):
+    org_id: int
     conv_id: int
     sender_id: int
     message: str
 
 @router.post("/messages")
-def send_message(data: MessageData):
+async def send_message(data: MessageData):
     connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
         cursor.execute("""
-            INSERT INTO messages (conversation_id, sender_id, message)
-            VALUES (%s, %s, %s)
-        """, (data.conv_id, data.sender_id, data.message))
+            WITH receiver AS (
+                SELECT CASE
+                    WHEN user1_id = %s THEN user2_id
+                    ELSE user1_id
+                END AS receiver_id
+                FROM conversations
+                WHERE id = %s
+            ),
+            new_message AS (
+                INSERT INTO messages (conversation_id, sender_id, message)
+                VALUES (%s, %s, %s)
+                RETURNING id
+            )
+            SELECT receiver.receiver_id
+            FROM receiver, new_message
+        """, (
+            data.sender_id,
+            data.conv_id,
+            data.conv_id,
+            data.sender_id,
+            data.message
+        ))
+
+        receiver_id = cursor.fetchone()[0]
+
         connection.commit()
+
+        await send_to_user(data.org_id, receiver_id, {
+            "resource": "messages",
+            "conversation_id": data.conv_id
+        })
+        connection.commit()
+
         return {"message": "Message sent."}
 
     except Exception:

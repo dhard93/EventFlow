@@ -120,10 +120,85 @@ export default function Dashboard({
   const [today] = useState(() => new Date());
   const [showMyOrganization, setShowMyOrganization] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const [currentMonth, setCurrentMonth] = useState(() =>
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
+
+  const [eventsRefresh, setEventsRefresh] = useState(0);
+  const [myEventsRefresh, setMyEventsRefresh] = useState(0);
+  const [messagesRefresh, setMessagesRefresh] = useState(0);
+
+  useEffect(() => {
+      if (!organizationId || !userId) return;
+
+      const eventSource = new EventSource(
+          `${API_URL}/events/stream/${organizationId}`,
+          { withCredentials: true }
+      );
+
+      eventSource.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+
+          switch (data.resource) {
+
+              case "events":
+                  setEventsRefresh(prev => prev + 1);
+                  setMyEventsRefresh(prev => prev + 1);
+                  break;
+
+              case "event_requests":
+                  fetch(`${API_URL}/events/pending/${organizationId}`, {
+                      credentials: "include"
+                  })
+                      .then(response => response.json())
+                      .then(requests => {
+                          onEventRequestsChange(
+                              Array.isArray(requests) && requests.length > 0
+                          );
+                      })
+                      .catch(error => console.error(error));
+                  break;
+
+              case "notifications":
+                  fetch(`${API_URL}/notifications/unread/${userId}`, {
+                      credentials: "include"
+                  })
+                      .then(response => response.json())
+                      .then(notifications => {
+                          onNotificationsChange(
+                              Array.isArray(notifications) && notifications.length > 0
+                          );
+                      })
+                      .catch(error => console.error(error));
+                  break;
+
+              case "conversations":
+                  fetchConversations();
+                  break;
+
+              case "messages":
+                  fetchConversations();
+                  if (selectedConversation) {
+                      setMessagesRefresh(prev => prev + 1);
+                  }
+                  break;
+
+              default:
+                  console.log("Unknown SSE event:", data);
+          }
+      };
+
+      eventSource.onerror = (error) => {
+          console.error("SSE connection error:", error);
+      };
+
+      return () => {
+          eventSource.close();
+      };
+
+  }, [organizationId, userId]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -166,7 +241,15 @@ export default function Dashboard({
     fetchEvents();
 
     return () => controller.abort();
-  }, [organizationId, currentMonth]);
+  }, [organizationId, currentMonth, eventsRefresh]);
+
+  useEffect(() => {
+      if (!selectedDate) return;
+
+      setSelectedDayEvents(
+          events.filter(event => eventOccursOnDate(event, selectedDate))
+      );
+  }, [events, selectedDate]);
 
   useEffect(() => {
     if (!userId || !organizationId) {
@@ -209,7 +292,7 @@ export default function Dashboard({
     fetchMyEvents();
 
     return () => controller.abort();
-  }, [userId, organizationId]);
+  }, [userId, organizationId, myEventsRefresh]);
 
   // Fetch conversations on dashboard load and whenever a message is sent.
   async function fetchConversations(signal) {
@@ -288,25 +371,29 @@ export default function Dashboard({
   );
 
   function handleDayClick(date) {
-    if (!date) {
-      setSelectedDayEvents([]);
-      return;
-    }
+      if (!date) {
+          setSelectedDate(null);
+          setSelectedDayEvents([]);
+          return;
+      }
 
-    const selectedDate = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, "0"),
-      String(date.getDate()).padStart(2, "0"),
-    ].join("-");
+      const dateKey = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+      ].join("-");
 
-    if (selectedDate < todayKey) {
-      setSelectedDayEvents([]);
-      return;
-    }
+      if (dateKey < todayKey) {
+          setSelectedDate(null);
+          setSelectedDayEvents([]);
+          return;
+      }
 
-    setSelectedDayEvents(
-      events.filter((event) => eventOccursOnDate(event, selectedDate))
-    );
+      setSelectedDate(dateKey);
+
+      setSelectedDayEvents(
+          events.filter(event => eventOccursOnDate(event, dateKey))
+      );
   }
 
   return (
@@ -343,15 +430,6 @@ export default function Dashboard({
       )}
 
       {accountType === 2 && (
-        <StaffSidebar
-          logout={logout}
-          onMyAccount={() => setShowMyAccount(true)}
-          hasUnreadNotifications={hasUnreadNotifications}
-          onNotifications={() => setShowNotifications(true)}
-        />
-      )}
-
-      {accountType === 3 && (
         <GuestSidebar
           logout={logout}
           onMyAccount={() => setShowMyAccount(true)}
@@ -515,7 +593,9 @@ export default function Dashboard({
         <Messages
           conversation={selectedConversation}
           userId={userId}
+          organizationId={organizationId}
           onClose={() => setSelectedConversation(null)}
+          refresh={messagesRefresh}
           onMessagesRead={(conversationId) => {
             setConversations((previous) =>
               previous.map((conversation) =>

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from database import get_db_connection
 from pydantic import BaseModel
+from sse_manager import send_to_user
 import traceback
 
 router = APIRouter()
@@ -56,12 +57,13 @@ def get_user_conversations(user_id: int):
 
 # Create a new conversation between the current user and another user
 class ConversationData(BaseModel):
+    org_id: int
     user1_id: int
     user2_id: int
     msg_content: str
 
 @router.post("/conversations")
-def create_user__conversation(data: ConversationData):
+async def create_user__conversation(data: ConversationData):
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -80,6 +82,7 @@ def create_user__conversation(data: ConversationData):
         """, (c_id, data.user1_id, data.msg_content))
 
         connection.commit()
+        await send_to_user(data.org_id, data.user2_id, {"resource":"conversations"})
         return {
             "message": "Conversation created.",
             "conversation_id": c_id

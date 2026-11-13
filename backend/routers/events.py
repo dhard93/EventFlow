@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, date
 from typing import Optional
 from constants import *
+from sse_manager import send_to_org, send_to_user
 import traceback
 
 router = APIRouter()
@@ -91,15 +92,17 @@ def approve_event(curs, req_id):
             date_approved = CURRENT_TIMESTAMP,
             last_updated = CURRENT_TIMESTAMP
         WHERE id = %s
-        RETURNING requesting_user_id, title
+        RETURNING org_id, requesting_user_id, title
     """, (APPROVED, req_id))
-    req_user_id, e_name = curs.fetchone()
+    org_id, req_user_id, e_name = curs.fetchone()
     send_notification(
         curs,
         req_user_id,
         REQ_APPROVED,
         f"Your event request for {e_name} has been approved!"
     )
+
+    return org_id, req_user_id
 
 def deny_event(curs, req_id, d_reason):
     curs.execute(f"""
@@ -109,9 +112,9 @@ def deny_event(curs, req_id, d_reason):
             denied_at = CURRENT_TIMESTAMP,
             last_updated = CURRENT_TIMESTAMP
         WHERE id = %s
-        RETURNING requesting_user_id, title
+        RETURNING org_id, requesting_user_id, title
     """, (DENIED, d_reason, req_id,))
-    req_user_id, e_name = curs.fetchone()
+    org_id, req_user_id, e_name = curs.fetchone()
     send_notification(
         curs,
         req_user_id,
@@ -119,14 +122,17 @@ def deny_event(curs, req_id, d_reason):
         f"Your event request for {e_name} has been denied. Reason: {d_reason}"
     )
 
+    return org_id, req_user_id
+
 def cancel_event(curs, event_id):
+    admin_id = get_admin_id(event_id)
     curs.execute(f"""
         UPDATE events
         SET request_status_id = %s
         WHERE id = %s
-        {get_admin_id(req_id)}, title
+        RETURNING org_id, {admin_id}, title
     """, (CANCELLED, event_id,))
-    admin_id, e_name = curs.fetchone()
+    org_id, admin_id, e_name = curs.fetchone()
     send_notification(
         curs,
         admin_id,
@@ -134,6 +140,7 @@ def cancel_event(curs, event_id):
         f"{e_name} has been cancelled."
     )
 
+    return org_id, admin_id
 
 #############
 # ENDPOINTS #######################################################
@@ -142,13 +149,14 @@ def cancel_event(curs, event_id):
 
 # Manually approve event
 @router.patch("/events/approve/{req_id}")
-def manual_process_event_request(req_id: int):
+async def manual_approve(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
-        approve_event(cursor, req_id)
+        org_id, user_id = approve_event(cursor, req_id)
         connection.commit()
+        await send_to_org(org_id, {"resource":"events"})
         return {"message":"Event request approved."}
     except Exception:
         connection.rollback()
@@ -165,13 +173,15 @@ def manual_process_event_request(req_id: int):
 
 # Cancel a pending/approved event
 @router.patch("/events/cancel/{req_id}")
-def manual_process_event_request(req_id: int):
+async def manual_cancel(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
-        cancel_event(cursor, req_id)
+        org_id, admin_id = cancel_event(cursor, req_id)
         connection.commit()
+        await send_to_org(org_id, {"resource":"events"})
+        await send_to_user(org_id, admin_id, {"resource":"notifications"})
         return {"message":"Event cancelled."}
     except Exception:
         traceback.print_exc()
@@ -192,13 +202,14 @@ class DenialReason(BaseModel):
     reason: str = Field(min_length=1, max_length=1000)
 
 @router.patch("/events/deny/{req_id}")
-def manual_process_event_request(req_id: int, data: DenialReason):
+async def manual_deny(req_id: int, data: DenialReason):
     connection = get_db_connection()
     cursor = connection.cursor()
 
     try:
-        deny_event(cursor, req_id, data.reason)
+        org_id, user_id = deny_event(cursor, req_id, data.reason)
         connection.commit()
+        await send_to_user(org_id, user_id, {"resource":"notifications"})
         return {"message":"Event request denied."}
     except Exception:
         connection.rollback()
@@ -215,7 +226,7 @@ def manual_process_event_request(req_id: int, data: DenialReason):
 
 # Auto-approve/deny event request
 @router.patch("/events/process/auto/{req_id}")
-def auto_process_event_request(req_id: int):
+async def auto_process_event_request(req_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     output = {"message": "Event request approved."}
@@ -229,12 +240,15 @@ def auto_process_event_request(req_id: int):
             denied_reason = "The requested resources exceed our available inventory."
 
         if denied_reason:
-            deny_event(cursor, req_id, denied_reason)
+            org_id, user_id = deny_event(cursor, req_id, denied_reason)
             output = {"message":f"{denied_reason}"}
+            connection.commit()
+            await send_to_user(org_id, user_id, {"resource":"notifications"})
         else:
-            approve_event(cursor, req_id)
+            org_id, user_id = approve_event(cursor, req_id)
+            connection.commit()
+            await send_to_org(org_id, {"resource":"events"})
 
-        connection.commit()
     except Exception:
         connection.rollback()
         raise HTTPException(
@@ -274,7 +288,7 @@ class EventData(BaseModel):
     resources: Resources = Resources()
 
 @router.post("/events")
-def create_event_request(data: EventData):
+async def create_event_request(data: EventData):
     query = """
         INSERT INTO events
             (
@@ -325,6 +339,7 @@ def create_event_request(data: EventData):
                 """, (req[0], resource_type_id, quantity))  
         
         connection.commit()
+        await send_to_user(data.org_id, data.admin_id, {"resource":"event_requests"})
         return {"message": "Event request created"}
     except Exception:
         connection.rollback()

@@ -1,19 +1,20 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, HTTPException
 from database import get_db_connection
-from pydantic import BaseModel, Field
-from typing import Any
+from pydantic import BaseModel
+from sse_manager import send_to_user
 from constants import *
 
 router = APIRouter()
 
 # Add a notification for a user
 class NotificationData(BaseModel):
+    org_id: int
     user_id: int
     type_id: int
     content: str
 
 @router.post("/notifications")
-def add_notification(data: NotificationData):
+async def add_notification(data: NotificationData):
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -25,6 +26,7 @@ def add_notification(data: NotificationData):
                 (%s, %s, %s)
         """, (data.user_id, data.type_id, data.content))
         connection.commit()
+        await send_to_user(data.org_id, data.user_id, {"resource":"notifications"})
         return {"message": "Notification received."}
     except Exception:
         connection.rollback()
@@ -65,7 +67,6 @@ def get_unread_notifications(user_id: int):
 
 
 # Mark a notification as read
-# TODO: implement this in dashboard
 @router.patch("/notifications/read/{n_id}")
 def mark_notification(n_id: int):
     connection = get_db_connection()

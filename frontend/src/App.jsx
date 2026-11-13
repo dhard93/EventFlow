@@ -8,8 +8,10 @@ import { API_URL } from "./config";
 
 /*
   TODO:
+  - Modify components that update data that is pre-cached so that they refresh cached data on submission
+  - Implement web sockets for triggering cache updates for users that need dashboard update from action
+    done by other users
   - Analytics module
-  - Implement web sockets
   - Organize css files
   - Test all endpoints
 */
