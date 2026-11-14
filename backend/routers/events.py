@@ -125,14 +125,16 @@ def deny_event(curs, req_id, d_reason):
     return org_id, req_user_id
 
 def cancel_event(curs, event_id):
-    admin_id = get_admin_id(event_id)
-    curs.execute(f"""
+    curs.execute("""
         UPDATE events
         SET request_status_id = %s
         WHERE id = %s
-        RETURNING org_id, {admin_id}, title
-    """, (CANCELLED, event_id,))
-    org_id, admin_id, e_name = curs.fetchone()
+        RETURNING org_id, title
+    """, (CANCELLED, event_id))
+
+    org_id, e_name = curs.fetchone()
+    admin_id = get_admin_id(event_id)
+
     send_notification(
         curs,
         admin_id,
