@@ -203,6 +203,7 @@ export default function Messages({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          org_id: organizationId,
           conv_id: conversationId,
           sender_id: userId,
           message: trimmedMessage

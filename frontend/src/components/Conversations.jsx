@@ -99,6 +99,7 @@ export default function Conversations({
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
+            org_id: organizationId,
             conv_id: existingConversation.conversation_id,
             sender_id: userId,
             message: message.trim()
@@ -119,6 +120,7 @@ export default function Conversations({
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
+            org_id: organizationId,
             user1_id: userId,
             user2_id: recipientId,
             msg_content: message.trim()
