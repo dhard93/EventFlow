@@ -507,7 +507,7 @@ export default function Dashboard({
         </div>
       )}
 
-      {accountType === 3 && showRequestEvent && (
+      {accountType === 2 && showRequestEvent && (
         <div className="modal-overlay" onClick={() => setShowRequestEvent(false)}>
           <div
             className="modal-content request-event-modal"
@@ -524,7 +524,7 @@ export default function Dashboard({
         </div>
       )}
 
-      {accountType === 3 && showMyEvents && (
+      {accountType === 2 && showMyEvents && (
         <div className="modal-overlay" onClick={() => setShowMyEvents(false)}>
           <div
             className="modal-content my-requests-modal"
