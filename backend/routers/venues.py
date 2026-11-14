@@ -233,24 +233,3 @@ def delete_venue(venue_id: int):
             cursor.close()
         if connection:
             connection.close()
-
-########
-# TEST #
-########
-# Update a venue and its spaces from My Organization menu.
-#
-# In My Organizations, when a venue is clicked, it pulls up
-# the AddVenue component but with all the data of the clicked
-# venue filled in. To do this, it retrieves all spaces for
-# that venue.
-#
-# The component should keep track of updated spaces, added spaces,
-# and deleted spaces.
-#
-# When user hits submit, it sends all 3 lists in a JSON object
-# to the update endpoint.
-#
-# For each of the 3 lists that is not empty, perform an
-# execute_values query on spaces table. Use pydantic class
-# to accept the 3 lists and have one of these objects in a
-# pydantic class for venue data.

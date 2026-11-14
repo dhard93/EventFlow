@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Login.css";
+import "../styles/Login.css";
 import { API_URL } from "../config";
 import LoadingOverlay from "./LoadingOverlay";
 

@@ -1,0 +1,455 @@
+
+/* ========================================
+   ANALYTICS PAGE
+======================================== */
+
+.analytics-page {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.analytics-content {
+  width: 100%;
+  height: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* ========================================
+   TOOLBAR / TIME FILTER
+======================================== */
+
+.analytics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.analytics-toolbar > span {
+  color: #20283a;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.analytics-time-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  background: #e9ecf3;
+  border-radius: 0.6rem;
+}
+
+.analytics-time-filter button {
+  padding: 0.5rem 0.85rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #778197;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.analytics-time-filter button:hover {
+  color: #20283a;
+}
+
+.analytics-time-filter button.active {
+  background: #ffffff;
+  color: #6366d9;
+  box-shadow: 0 1px 4px rgb(23 34 56 / 10%);
+}
+
+/* ========================================
+   SHARED CARDS
+======================================== */
+
+.analytics-card {
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1.1rem;
+  background: #ffffff;
+  border: 1px solid #e5e8ef;
+  border-radius: 0.85rem;
+  box-shadow: 0 2px 8px rgb(23 34 56 / 4%);
+}
+
+.analytics-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.analytics-card-header h2 {
+  margin: 0;
+  color: #20283a;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ========================================
+   STAT CARDS
+======================================== */
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.stat-card > span {
+  color: #778197;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.stat-card > strong {
+  color: #20283a;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* ========================================
+   REQUEST BREAKDOWN
+======================================== */
+
+.analytics-middle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.breakdown-card {
+  width: 100%;
+  padding: 1rem 1.25rem;
+}
+
+.breakdown-card .analytics-card-header {
+  margin-bottom: 0.65rem;
+}
+
+.breakdown-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 0.5rem 0;
+}
+
+.breakdown-donut {
+  display: grid;
+  place-items: center;
+  width: 130px;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.donut-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 68%;
+  height: 68%;
+  border-radius: 50%;
+  background: white;
+}
+
+.donut-center strong {
+  color: #20283a;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.donut-center span {
+  margin-top: 0.2rem;
+  color: #929bad;
+  font-size: 0.85rem;
+}
+
+.breakdown-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 200px;
+}
+
+.breakdown-legend > div {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breakdown-legend i {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  flex-shrink: 0;
+  border-radius: 0.15rem;
+}
+
+.breakdown-legend span {
+  color: #778197;
+  font-size: 1.0rem;
+}
+
+.breakdown-legend strong {
+  color: #20283a;
+  font-size: 1.0rem;
+}
+
+/* ========================================
+   BOTTOM RANKINGS
+======================================== */
+
+.analytics-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.analytics-bottom-left {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.analytics-bottom-right {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.analytics-bottom-left .ranking-card,
+.analytics-bottom-right .ranking-card {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* ========================================
+   RANKING CARDS
+======================================== */
+
+.ranking-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Exactly three ranking rows, with equal spacing
+   and identical card layouts for venues and users. */
+
+.analytics-bottom-left .ranking-list {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Spaces use the same row spacing and fill the
+   combined height of the two left ranking cards. */
+
+.analytics-bottom-right .ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.ranking-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ranking-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.ranking-name {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.ranking-number {
+  color: #a0a8b8;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.ranking-name strong {
+  overflow: hidden;
+  color: #344054;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-count {
+  flex-shrink: 0;
+  color: #778197;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Remove the decorative ranking bars entirely. */
+
+.ranking-track,
+.ranking-fill {
+  display: none;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 800px) {
+  .analytics-page {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .analytics-content {
+    height: auto;
+    min-height: 0;
+  }
+
+  .analytics-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-bottom {
+    grid-template-columns: 1fr;
+    flex: none;
+  }
+
+  .analytics-bottom-left {
+    grid-template-rows: repeat(2, minmax(9rem, auto));
+  }
+
+  .analytics-bottom-right .ranking-card {
+    min-height: 18rem;
+    height: auto;
+  }
+
+  .analytics-bottom-left .ranking-card {
+    height: auto;
+    min-height: 9rem;
+  }
+
+  .analytics-bottom-left .ranking-list {
+    grid-template-rows: repeat(3, minmax(2.5rem, auto));
+  }
+}
+
+@media (max-width: 650px) {
+  .analytics-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .analytics-time-filter {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .analytics-time-filter button {
+    flex: 1;
+    padding: 0.55rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .analytics-card {
+    padding: 1rem;
+  }
+
+  .breakdown-content {
+    gap: 1.25rem;
+  }
+
+  .breakdown-donut {
+    width: 100px;
+  }
+
+  .breakdown-legend {
+    min-width: 0;
+  }
+
+  .analytics-card-header h2 {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .breakdown-content {
+    flex-direction: column;
+  }
+
+  .breakdown-legend {
+    width: 100%;
+  }
+}
+.analytics-toolbar {
+  padding: 0 0.25rem;
+  box-sizing: border-box;
+}
+.legend-approved {
+  background: #6366d9;
+}
+
+.legend-denied {
+  background: #e4a34c;
+}
+
+.legend-cancelled {
+  background: #dc6b6b;
+}
+
+.legend-pending {
+  background: #30f838;
+}

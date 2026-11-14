@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import "../Messages.css";
+import "../styles/Messages.css";
 import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 

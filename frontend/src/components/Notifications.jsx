@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
-import "../Notifications.css";
+import "../styles/Notifications.css";
 
 export default function Notifications({
   userId,

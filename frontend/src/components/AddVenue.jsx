@@ -1,5 +1,5 @@
 
-import '../AddVenue.css';
+import '../styles/AddVenue.css';
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 

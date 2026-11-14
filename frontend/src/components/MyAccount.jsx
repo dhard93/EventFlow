@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import LoadingOverlay from "./LoadingOverlay";
-import "../MyAccount.css";
+import "../styles/MyAccount.css";
 
 export default function MyAccount({
   organizationId,

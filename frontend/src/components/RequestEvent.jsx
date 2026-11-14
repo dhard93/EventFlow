@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
-import "../RequestEvent.css";
+import "../styles/RequestEvent.css";
 
 const RECURRENCE_OPTIONS = [
   { value: "daily", label: "Daily" },

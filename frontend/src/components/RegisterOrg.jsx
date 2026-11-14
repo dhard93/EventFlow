@@ -2,7 +2,7 @@
 import { useState } from "react";
 import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
-import "../Register.css";
+import "../styles/Register.css";
 
 export default function RegisterOrg({
   onRegister,

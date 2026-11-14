@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export default function AdminSidebar({
   logout,
   onMyAccount,
@@ -8,7 +10,15 @@ export default function AdminSidebar({
   hasUnreadNotifications,
   hasUnreadEventRequests,
   onNotifications,
+  onAnalytics,
+  onDashboard
 }) {
+  const [activeItem, setActiveItem] = useState("dashboard");
+  const handleClick = (item, callback) => (e) => {
+    e.preventDefault();
+    setActiveItem(item);
+    callback?.();
+  };
 
   return (
     <aside className="sidebar">
@@ -21,15 +31,25 @@ export default function AdminSidebar({
       </div>
 
       <nav className="sidebar-nav">
-        <a href="#" className="nav-link active">
+        <a
+          href="#"
+          className={`nav-link ${activeItem === "dashboard" ? "active" : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveItem("dashboard");
+            onDashboard();
+          }}
+        >
           <span className="nav-icon">▦</span>
           <span>Dashboard</span>
-          <span className="active-indicator" />
+          {activeItem === "dashboard" && (
+            <span className="active-indicator" />
+          )}
         </a>
 
         <a
           href="#"
-          className="nav-link"
+          className={`nav-link ${activeItem === "account" ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             onMyAccount();
@@ -37,11 +57,14 @@ export default function AdminSidebar({
         >
           <span className="nav-icon">◉</span>
           <span>My Account</span>
+          {activeItem === "account" && (
+            <span className="active-indicator" />
+          )}
         </a>
 
         <a
           href="#"
-          className="nav-link"
+          className={`nav-link ${activeItem === "organization" ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             onMyOrganization();
@@ -49,11 +72,14 @@ export default function AdminSidebar({
         >
           <span className="nav-icon">♙</span>
           <span>My Organization</span>
+          {activeItem === "organization" && (
+            <span className="active-indicator" />
+          )}
         </a>
 
         <a
           href="#"
-          className="nav-link"
+          className={`nav-link ${activeItem === "requests" ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             onEventRequests();
@@ -64,26 +90,58 @@ export default function AdminSidebar({
           {hasUnreadEventRequests && (
             <span className="notification-dot" />
           )}
-        </a>
-
-        <a href="#" className="nav-link" onClick={onAddUser}>
-          <span className="nav-icon">♟</span>
-          <span>Add User</span>
-        </a>
-
-        <a href="#" className="nav-link" onClick={onAddVenue}>
-          <span className="nav-icon">⌂</span>
-          <span>Add Venue</span>
-        </a>
-
-        <a href="#" className="nav-link">
-          <span className="nav-icon">↗</span>
-          <span>Analytics</span>
+          {activeItem === "requests" && (
+            <span className="active-indicator" />
+          )}
         </a>
 
         <a
           href="#"
-          className="nav-link"
+          className={`nav-link ${activeItem === "user" ? "active" : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onAddUser();
+          }}
+        >
+          <span className="nav-icon">♟</span>
+          <span>Add User</span>
+          {activeItem === "user" && (
+            <span className="active-indicator" />
+          )}
+        </a>
+
+        <a
+          href="#"
+          className={`nav-link ${activeItem === "venue" ? "active" : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveItem("venue");
+            onAddVenue();
+          }}
+        >
+          <span className="nav-icon">⌂</span>
+          <span>Add Venue</span>
+        </a>
+
+        <a
+          href="#"
+          className={`nav-link ${activeItem === "analytics" ? "active" : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            setActiveItem("analytics");
+            onAnalytics();
+          }}
+        >
+          <span className="nav-icon">↗</span>
+          <span>Analytics</span>
+          {activeItem === "analytics" && (
+            <span className="active-indicator" />
+          )}
+        </a>
+
+        <a
+          href="#"
+          className={`nav-link ${activeItem === "notifications" ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             onNotifications();
@@ -93,6 +151,9 @@ export default function AdminSidebar({
           <span>Notifications</span>
           {hasUnreadNotifications && (
             <span className="notification-dot" />
+          )}
+          {activeItem === "notifications" && (
+            <span className="active-indicator" />
           )}
         </a>
 

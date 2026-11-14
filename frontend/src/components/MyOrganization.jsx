@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../config";
 import LoadingOverlay from "./LoadingOverlay";
-import "../MyOrganization.css";
+import "../styles/MyOrganization.css";
 import AddVenue from "./AddVenue";
 
 export default function MyOrganization({

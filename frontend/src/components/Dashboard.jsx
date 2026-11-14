@@ -1,5 +1,5 @@
 
-import '../Dashboard.css';
+import '../styles/Dashboard.css';
 import { useState, useEffect } from "react";
 import AdminSidebar from "./AdminSidebar";
 import GuestSidebar from "./GuestSidebar";
@@ -15,6 +15,7 @@ import MyAccount from "./MyAccount";
 import Notifications from "./Notifications";
 import Messages from "./Messages";
 import MyOrganization from "./MyOrganization";
+import Analytics from "./Analytics";
 import LoadingOverlay from "./LoadingOverlay";
 import { API_URL } from "../config";
 
@@ -121,6 +122,7 @@ export default function Dashboard({
   const [showMyOrganization, setShowMyOrganization] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(() =>
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -129,6 +131,7 @@ export default function Dashboard({
   const [eventsRefresh, setEventsRefresh] = useState(0);
   const [myEventsRefresh, setMyEventsRefresh] = useState(0);
   const [messagesRefresh, setMessagesRefresh] = useState(0);
+
 
   useEffect(() => {
       if (!organizationId || !userId) return;
@@ -417,6 +420,8 @@ export default function Dashboard({
           hasUnreadNotifications={hasUnreadNotifications}
           hasUnreadEventRequests={hasUnreadEventRequests}
           onNotifications={() => setShowNotifications(true)}
+          onAnalytics={() => setShowAnalytics(true)}
+          onDashboard={() => setShowAnalytics(false)}
         />
       )}
 
@@ -446,30 +451,34 @@ export default function Dashboard({
           <h1>{organizationName}</h1>
         </header>
 
-        <section className="dashboard-content">
-          <div className="dashboard-left">
-            <Calendar
-              currentMonth={currentMonth}
-              onMonthChange={setCurrentMonth}
-              onDayClick={handleDayClick}
-              eventDates={eventDates}
-            />
+        {accountType === 1 && showAnalytics ? (
+          <Analytics organizationId={organizationId} />
+        ) : (
+          <section className="dashboard-content">
+            <div className="dashboard-left">
+              <Calendar
+                currentMonth={currentMonth}
+                onMonthChange={setCurrentMonth}
+                onDayClick={handleDayClick}
+                eventDates={eventDates}
+              />
 
-            <Conversations
-              conversations={conversations}
-              error={conversationsError}
-              organizationId={organizationId}
-              userId={userId}
-              onConversationClick={setSelectedConversation}
-              onConversationSent={(conversation) => {
-                setSelectedConversation(conversation);
-                fetchConversations();
-              }}
-            />
-          </div>
+              <Conversations
+                conversations={conversations}
+                error={conversationsError}
+                organizationId={organizationId}
+                userId={userId}
+                onConversationClick={setSelectedConversation}
+                onConversationSent={(conversation) => {
+                  setSelectedConversation(conversation);
+                  fetchConversations();
+                }}
+              />
+            </div>
 
-          <EventTable selectedDayEvents={selectedDayEvents} />
+            <EventTable selectedDayEvents={selectedDayEvents} />
         </section>
+        )}
 
         {eventsError && <p role="alert">{eventsError}</p>}
       </main>

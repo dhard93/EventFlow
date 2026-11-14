@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import LoadingOverlay from "./LoadingOverlay";
-import "../EventRequests.css";
+import "../styles/EventRequests.css";
 import { API_URL } from "../config";
 
 // Change this to match the route decorator for auto_process_event_request.

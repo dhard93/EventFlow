@@ -1,4 +1,6 @@
 
+import { useState } from "react";
+
 export default function GuestSidebar({
   logout,
   onMyAccount,
@@ -7,6 +9,14 @@ export default function GuestSidebar({
   hasUnreadNotifications,
   onNotifications,
 }) {
+  const [activeItem, setActiveItem] = useState("dashboard");
+
+  const handleClick = (item, callback) => (e) => {
+    e.preventDefault();
+    setActiveItem(item);
+    callback?.();
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -20,19 +30,22 @@ export default function GuestSidebar({
       </div>
 
       <nav className="sidebar-nav">
-        <a href="#" className="nav-link active">
+        <a
+          href="#"
+          className={`nav-link ${activeItem === "dashboard" ? "active" : ""}`}
+          onClick={handleClick("dashboard")}
+        >
           <span className="nav-icon">▦</span>
           <span>Dashboard</span>
-          <span className="active-indicator" />
+          {activeItem === "dashboard" && (
+            <span className="active-indicator" />
+          )}
         </a>
 
         <a
           href="#"
-          className="nav-link"
-          onClick={(e) => {
-            e.preventDefault();
-            onMyAccount();
-          }}
+          className={`nav-link ${activeItem === "account" ? "active" : ""}`}
+          onClick={handleClick("account", onMyAccount)}
         >
           <span className="nav-icon">◉</span>
           <span>My Account</span>
@@ -40,11 +53,8 @@ export default function GuestSidebar({
 
         <a
           href="#"
-          className="nav-link"
-          onClick={(e) => {
-            e.preventDefault();
-            onRequestEvent?.();
-          }}
+          className={`nav-link ${activeItem === "request" ? "active" : ""}`}
+          onClick={handleClick("request", onRequestEvent)}
         >
           <span className="nav-icon">✚</span>
           <span>Request Event</span>
@@ -52,11 +62,8 @@ export default function GuestSidebar({
 
         <a
           href="#"
-          className="nav-link"
-          onClick={(e) => {
-            e.preventDefault();
-            onMyEvents?.();
-          }}
+          className={`nav-link ${activeItem === "events" ? "active" : ""}`}
+          onClick={handleClick("events", onMyEvents)}
         >
           <span className="nav-icon">▥</span>
           <span>My Events</span>
@@ -64,11 +71,8 @@ export default function GuestSidebar({
 
         <a
           href="#"
-          className="nav-link"
-          onClick={(e) => {
-            e.preventDefault();
-            onNotifications();
-          }}
+          className={`nav-link ${activeItem === "notifications" ? "active" : ""}`}
+          onClick={handleClick("notifications", onNotifications)}
         >
           <span className="nav-icon">♧</span>
           <span>Notifications</span>
@@ -80,10 +84,7 @@ export default function GuestSidebar({
         <a
           href="#"
           className="nav-link"
-          onClick={(e) => {
-            e.preventDefault();
-            logout();
-          }}
+          onClick={handleClick("logout", logout)}
         >
           <span className="nav-icon">⎋</span>
           <span>Logout</span>

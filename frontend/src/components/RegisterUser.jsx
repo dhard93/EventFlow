@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { API_URL } from "../config";
 import LoadingOverlay from "./LoadingOverlay";
-import "../Register.css";
+import "../styles/Register.css";
 
-export default function RegisterUser({ onRegister, organizationId }) {
+export default function RegisterUser({ organizationId, onClose }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

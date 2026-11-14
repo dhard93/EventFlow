@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import "../EventTable.css";
+import "../styles/EventTable.css";
 
 export default function EventTable({ selectedDayEvents = [] }) {
   const [selectedVenue, setSelectedVenue] = useState("All Venues");

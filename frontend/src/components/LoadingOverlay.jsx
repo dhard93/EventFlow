@@ -1,4 +1,4 @@
-import "../LoadingOverlay.css";
+import "../styles/LoadingOverlay.css";
 
 export default function LoadingOverlay({
   isLoading,
