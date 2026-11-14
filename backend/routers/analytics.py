@@ -133,7 +133,8 @@ def get_venues_ranked(time_range: int, org_id: int):
             {time_range_where_clause()} AND
             E.org_id = %s
             GROUP BY V.id, V.name
-            ORDER BY request_count DESC;
+            ORDER BY request_count DESC
+            LIMIT 3
         """, (time_range, time_range, org_id))
         rows = cursor.fetchall()
 
@@ -167,7 +168,8 @@ def get_users_ranked(time_range: int, org_id: int):
             {time_range_where_clause()} AND
             E.org_id = %s
             GROUP BY U.id, U.f_name, U.l_name
-            ORDER BY request_count DESC;
+            ORDER BY request_count DESC
+            LIMIT 3
         """, (time_range, time_range, org_id))
         rows = cursor.fetchall()
 
@@ -202,7 +204,8 @@ def get_spaces_ranked(time_range: int, org_id: int):
             {time_range_where_clause()} AND
             E.org_id = %s
             GROUP BY S.id, S.name, V.id, V.name
-            ORDER BY request_count DESC;
+            ORDER BY request_count DESC
+            LIMIT 6
         """, (time_range, time_range, org_id))
         rows = cursor.fetchall()
 
