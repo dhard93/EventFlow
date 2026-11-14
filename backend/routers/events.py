@@ -167,6 +167,7 @@ async def manual_approve(req_id: int):
         org_id, user_id = approve_event(cursor, req_id)
         connection.commit()
         await send_to_org(org_id, {"resource":"events"})
+        await send_to_user(org_id, user_id, {"resource":"notifications"})
         return {"message":"Event request approved."}
     except Exception:
         connection.rollback()
