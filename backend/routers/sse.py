@@ -75,7 +75,7 @@ async def event_stream(organization_id: int, request: Request):
                     yield ": keep-alive\n\n"
 
         finally:
-            disconnect(organization_id, user_id)
+            disconnect(organization_id, user_id, queue)
 
     return StreamingResponse(
         event_generator(),

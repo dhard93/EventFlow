@@ -140,6 +140,7 @@ export default function Dashboard({
 
       eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
+          console.log("SSE RECEIVED:", data);
 
           switch (data.resource) {
 

@@ -10,8 +10,9 @@ async def connect(organization_id, user_id):
     return queue
 
 
-def disconnect(organization_id, user_id):
-    connections[organization_id].pop(user_id, None)
+def disconnect(organization_id, user_id, queue):
+    if connections.get(organization_id, {}).get(user_id) is queue:
+        connections[organization_id].pop(user_id, None)
 
 
 async def send_to_org(organization_id, event):
