@@ -69,16 +69,6 @@ def check_resources(curs, req_id):
     rows = curs.fetchall()
     return rows
 
-def get_admin_id(event_id):
-    return f"""
-        RETURNING (
-            SELECT U.id
-            FROM users U
-            JOIN events E
-            ON U.org_id = E.org_id
-            WHERE U.account_type_id = {ADMIN}
-        )"""
-
 def send_notification(curs, user, n_type, n_content):
     curs.execute("""
         INSERT INTO notifications (user_id, type_id, content)
@@ -126,14 +116,32 @@ def deny_event(curs, req_id, d_reason):
 
 def cancel_event(curs, event_id):
     curs.execute("""
-        UPDATE events
+        UPDATE events E
         SET request_status_id = %s
-        WHERE id = %s
-        RETURNING org_id, title
+        WHERE E.id = %s
+        RETURNING E.org_id, E.title
     """, (CANCELLED, event_id))
 
-    org_id, e_name = curs.fetchone()
-    admin_id = get_admin_id(event_id)
+    result = curs.fetchone()
+
+    if not result:
+        raise ValueError("Event not found.")
+
+    org_id, e_name = result
+
+    curs.execute("""
+        SELECT id
+        FROM users
+        WHERE org_id = %s
+        AND account_type_id = %s
+    """, (org_id, ADMIN))
+
+    admin = curs.fetchone()
+
+    if not admin:
+        raise ValueError("Organization admin not found.")
+
+    admin_id = admin[0]
 
     send_notification(
         curs,
