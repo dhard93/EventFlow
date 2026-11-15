@@ -1,20 +1,32 @@
-
 import { useState, useEffect } from "react";
 import "../styles/EventTable.css";
+
+const RESOURCE_IDS = {
+  chairs: 1,
+  tables: 2,
+  microphones: 3,
+  tvs: 4,
+  podiums: 5,
+};
 
 export default function EventTable({ selectedDayEvents = [] }) {
   const [selectedVenue, setSelectedVenue] = useState("All Venues");
 
   const columns = [
-    { label: "Title", index: 2, width: "16%" },
-    { label: "Venue", index: 3, width: "12%" },
-    { label: "Space", index: 4, width: "12%" },
-    { label: "Start Time", index: 5, width: "14%" },
-    { label: "End Time", index: 6, width: "14%" },
-    { label: "Description", index: 7, width: "32%" },
+    { label: "Title", index: 2, width: "180px" },
+    { label: "Venue", index: 3, width: "160px" },
+    { label: "Space", index: 4, width: "150px" },
+    { label: "Start Time", index: 5, width: "140px" },
+    { label: "End Time", index: 6, width: "140px" },
+    { label: "Description", index: 7, width: "220px" },
+    { label: "Attendees", index: 8, width: "100px" },
+    { label: "Chairs", index: "chairs", width: "90px" },
+    { label: "Tables", index: "tables", width: "90px" },
+    { label: "Microphones", index: "microphones", width: "120px" },
+    { label: "TVs", index: "tvs", width: "80px" },
+    { label: "Podiums", index: "podiums", width: "90px" },
   ];
 
-  // Only show venues represented in the selected day's events.
   const venues = [
     ...new Set(
       selectedDayEvents
@@ -26,7 +38,6 @@ export default function EventTable({ selectedDayEvents = [] }) {
     ),
   ].sort();
 
-  // Filter events by the selected venue.
   const filteredEvents =
     selectedVenue === "All Venues"
       ? selectedDayEvents
@@ -34,7 +45,6 @@ export default function EventTable({ selectedDayEvents = [] }) {
           (event) => event[3] === selectedVenue
         );
 
-  // Reset venue selection when the selected day's events change.
   useEffect(() => {
     setSelectedVenue("All Venues");
   }, [selectedDayEvents]);
@@ -42,18 +52,60 @@ export default function EventTable({ selectedDayEvents = [] }) {
   function formatTime(timestamp) {
     if (!timestamp) return "—";
 
-    const time = timestamp.slice(11, 19);
-    const [hours, minutes] = time.split(":").map(Number);
+    const date = new Date(timestamp);
 
-    const period = hours >= 12 ? "PM" : "AM";
-    const displayHours = hours % 12 || 12;
+    if (Number.isNaN(date.getTime())) return "—";
 
-    return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
+    return date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function getResourceCount(event, resourceTypeId) {
+    const resources = event[9];
+
+    if (!Array.isArray(resources)) return 0;
+
+    return resources.reduce((total, resource) => {
+      return Number(resource.resource_type_id) === resourceTypeId
+        ? total + Number(resource.quantity || 0)
+        : total;
+    }, 0);
+  }
+
+  function getCellValue(event, column) {
+    if (column.index === "chairs") {
+      return getResourceCount(event, RESOURCE_IDS.chairs);
+    }
+
+    if (column.index === "tables") {
+      return getResourceCount(event, RESOURCE_IDS.tables);
+    }
+
+    if (column.index === "microphones") {
+      return getResourceCount(event, RESOURCE_IDS.microphones);
+    }
+
+    if (column.index === "tvs") {
+      return getResourceCount(event, RESOURCE_IDS.tvs);
+    }
+
+    if (column.index === "podiums") {
+      return getResourceCount(event, RESOURCE_IDS.podiums);
+    }
+
+    const value = event[column.index];
+
+    if (column.index === 5 || column.index === 6) {
+      return formatTime(value);
+    }
+
+    return value == null || value === "" ? "—" : String(value);
   }
 
   return (
     <section className="events-panel">
-      {/* Original heading remains in its own row */}
       <div className="events-panel-header">
         <h2>Scheduled Events</h2>
         <span className="events-count">
@@ -61,8 +113,6 @@ export default function EventTable({ selectedDayEvents = [] }) {
         </span>
       </div>
 
-
-      {/* Venue filters - separate row above the heading */}
       {selectedDayEvents.length > 0 && (
         <div className="venue-tabs">
           <button
@@ -135,12 +185,7 @@ export default function EventTable({ selectedDayEvents = [] }) {
                 <tr key={`${event[0]}-${event[3]}-${index}`}>
                   {columns.map((column) => (
                     <td key={column.index}>
-                      {column.index === 5 || column.index === 6
-                        ? formatTime(event[column.index])
-                        : event[column.index] == null ||
-                            event[column.index] === ""
-                          ? "—"
-                          : String(event[column.index])}
+                      {getCellValue(event, column)}
                     </td>
                   ))}
                 </tr>

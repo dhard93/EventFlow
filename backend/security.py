@@ -30,4 +30,3 @@ def create_session(cursor, user_id: int) -> str:
     """, (token_hash, user_id, expires_at))
 
     return token
-    

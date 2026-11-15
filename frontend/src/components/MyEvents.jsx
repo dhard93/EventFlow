@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { API_URL } from "../config";
 import "../styles/MyEvents.css";
@@ -6,15 +7,37 @@ const CANCEL_EVENT_URL = (eventId) =>
   `${API_URL}/events/cancel/${eventId}`;
 
 const COLUMNS = [
-  { key: "title", label: "Event title" },
+  { key: "title", label: "Event" },
   { key: "venue", label: "Venue" },
   { key: "space", label: "Space" },
-  { key: "start_time", label: "Start time" },
-  { key: "end_time", label: "End time" },
+  { key: "start", label: "Start" },
+  { key: "end", label: "End" },
+  { key: "description", label: "Description" },
+  { key: "attendees", label: "Attendees" },
+  { key: "chairs", label: "Chairs" },
+  { key: "tables", label: "Tables" },
   { key: "recurring", label: "Recurring" },
-  { key: "recurrence_type", label: "Recurrence" },
-  { key: "recurrence_end_date", label: "Recurrence Ends" },
+  { key: "recurrenceType", label: "Recurrence" },
+  { key: "recurrenceEnd", label: "Recurrence Ends" },
 ];
+
+function getResourceCount(resources, resourceTypeId) {
+  if (typeof resources === "string") {
+    try {
+      resources = JSON.parse(resources);
+    } catch {
+      return 0;
+    }
+  }
+
+  if (!Array.isArray(resources)) return 0;
+
+  return resources.reduce((total, resource) => {
+    return Number(resource.resource_type_id) === resourceTypeId
+      ? total + Number(resource.quantity || 0)
+      : total;
+  }, 0);
+}
 
 function normalizeEvent(row) {
   return {
@@ -23,13 +46,16 @@ function normalizeEvent(row) {
     title: row[2],
     venue: row[3],
     space: row[4],
-    start_time: row[5],
-    end_time: row[6],
+    start: row[5],
+    end: row[6],
     description: row[7],
-    is_recurring: row[8],
-    recurrence_type: row[9],
-    recurrence_end_date: row[10],
-    recurring: row[8] ? "Yes" : "No",
+    attendees: row[8],
+    chairs: getResourceCount(row[9], 1),
+    tables: getResourceCount(row[9], 2),
+    recurring: row[10] ? "Yes" : "No",
+    recurrenceType: row[11],
+    recurrenceEnd: row[12],
+    is_recurring: row[10],
   };
 }
 
@@ -203,10 +229,16 @@ export default function MyEvents({
 
                         return (
                           <td key={column.key}>
-                            {column.key === "recurrence_end_date" &&
-                            !row.is_recurring
-                              ? "—"
-                              : formatValue(value)}
+                            {column.key === "start" ||
+                            column.key === "end" ||
+                            column.key === "recurrenceEnd"
+                              ? column.key === "recurrenceEnd" &&
+                                !row.is_recurring
+                                ? "—"
+                                : formatValue(value)
+                              : value == null || value === ""
+                                ? "—"
+                                : String(value)}
                           </td>
                         );
                       })}

@@ -13,12 +13,20 @@ router = APIRouter()
 # recurrence end date are >= either current month or current date.
 # Added onto by different endpoints depending on the request
 EVENTS_QUERY = """
-    SELECT E.id, E.requesting_user_id, E.title, V.name, S.name, 
-           E.start_time, E.end_time, E.description, E.is_recurring,
-           E.recurrence_type, E.recurrence_end_date
-    FROM events E
-    JOIN venues V ON E.venue_id = V.id
-    JOIN spaces S ON E.space_id = S.id
+    SELECT
+        E.id, E.requesting_user_id, E.title, V.name, S.name,
+        E.start_time, E.end_time, E.description,
+        E.attendee_count, (
+            SELECT JSON_AGG(
+                JSON_BUILD_OBJECT(
+                    'resource_type_id', R.resource_type_id,
+                    'quantity', R.quantity
+                )
+            )
+            FROM event_request_resources R
+            WHERE R.request_id = E.id
+        ) AS resources, E.is_recurring,
+        E.recurrence_type, E.recurrence_end_date
 """
 
 
@@ -61,8 +69,8 @@ def check_resources(curs, req_id):
         JOIN spaces S ON E.space_id = S.id
         WHERE RR.request_id = %s
         AND RR.quantity > CASE
-            WHEN R.resource_type_id = %s THEN S.capacity
-            WHEN R.resource_type_id = %s THEN S.table_max
+            WHEN RR.resource_type_id = %s THEN S.capacity
+            WHEN RR.resource_type_id = %s THEN S.table_max
             ELSE 0
         END
     """, (req_id, CHAIR, TABLE))
@@ -235,45 +243,6 @@ async def manual_deny(req_id: int, data: DenialReason):
             connection.close()
 
 
-# Auto-approve/deny event request
-@router.patch("/events/process/auto/{req_id}")
-async def auto_process_event_request(req_id: int):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    output = {"message": "Event request approved."}
-    denied_reason = None
-    try:
-        if check_event_time(cursor, req_id):
-            denied_reason = "The requested space is unavailable at the requested time."
-        elif not check_capacity(cursor, req_id):
-            denied_reason = "The requested attendee count exceeds the requested space's capacity."
-        elif check_resources(cursor, req_id):
-            denied_reason = "The requested resources exceed our available inventory."
-
-        if denied_reason:
-            org_id, user_id = deny_event(cursor, req_id, denied_reason)
-            output = {"message":f"{denied_reason}"}
-            connection.commit()
-            await send_to_user(org_id, user_id, {"resource":"notifications"})
-        else:
-            org_id, user_id = approve_event(cursor, req_id)
-            connection.commit()
-            await send_to_org(org_id, {"resource":"events"})
-
-    except Exception:
-        connection.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Unable to process event."
-        )
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-    return output
-
-
 # Create new event request
 class Resources(BaseModel):
     Chairs: int = 0
@@ -371,8 +340,8 @@ def get_pending_requests(org_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute("""
-            SELECT E.id, E.title, V.name, S.name, E.start_time, E.end_time, E.description, E.is_recurring, E.recurrence_type, E.recurrence_end_date, U.f_name, U.l_name
+        cursor.execute(f"""
+            {EVENTS_QUERY}, U.f_name || ' ' || U.l_name AS name
             FROM events E
             JOIN venues V ON E.venue_id = V.id
             JOIN spaces S ON E.space_id = S.id
@@ -405,7 +374,11 @@ def get_events(org_id: int, month: int, year: int):
     event_date = datetime(year, month, 1)
     try:
         cursor.execute(f"""
-            {EVENTS_QUERY}
+            {EVENTS_QUERY}, U.f_name || ' ' || U.l_name AS name
+            FROM events E
+            JOIN venues V ON E.venue_id = V.id
+            JOIN spaces S ON E.space_id = S.id
+            JOIN users U ON E.requesting_user_id = U.id
             WHERE E.org_id = %s AND
             E.request_status_id = %s AND ((
                 EXTRACT(MONTH FROM E.start_time) = %s AND
@@ -440,6 +413,9 @@ def get_user_req_events(user_id):
     try:
         cursor.execute(f"""
             {EVENTS_QUERY}
+            FROM events E
+            JOIN venues V ON E.venue_id = V.id
+            JOIN spaces S ON E.space_id = S.id
             WHERE E.request_status_id = %s AND 
             E.requesting_user_id = %s AND ((
                 E.is_recurring = FALSE AND

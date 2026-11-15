@@ -205,7 +205,7 @@ def get_spaces_ranked(time_range: int, org_id: int):
             E.org_id = %s
             GROUP BY S.id, S.name, V.id, V.name
             ORDER BY request_count DESC
-            LIMIT 6
+            LIMIT 10
         """, (time_range, time_range, org_id))
         rows = cursor.fetchall()
 

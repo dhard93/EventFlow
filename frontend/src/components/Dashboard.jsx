@@ -56,19 +56,36 @@ function eventOccursOnDate(event, dateKey) {
 
   if (!startDate || dateKey < startDate) return false;
 
-  if (!event[8]) return dateKey === startDate;
+  // Index 10 = is_recurring
+  if (!event[10]) return dateKey === startDate;
 
-  const recurrenceType = String(event[9] || "").toLowerCase();
-  const endDate = event[10]?.slice(0, 10);
+  // Index 11 = recurrence_type
+  const recurrenceType = String(event[11] || "").toLowerCase();
+
+  // Index 12 = recurrence_end_date
+  const endDate = event[12]?.slice(0, 10);
 
   if (!endDate || dateKey > endDate) return false;
 
-  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+  const [startYear, startMonth, startDay] =
+    startDate.split("-").map(Number);
+
   const [year, month, day] = dateKey.split("-").map(Number);
 
-  const startTimestamp = Date.UTC(startYear, startMonth - 1, startDay);
-  const selectedTimestamp = Date.UTC(year, month - 1, day);
-  const daysSinceStart = (selectedTimestamp - startTimestamp) / 86400000;
+  const startTimestamp = Date.UTC(
+    startYear,
+    startMonth - 1,
+    startDay
+  );
+
+  const selectedTimestamp = Date.UTC(
+    year,
+    month - 1,
+    day
+  );
+
+  const daysSinceStart =
+    (selectedTimestamp - startTimestamp) / 86400000;
 
   if (recurrenceType === "daily") return true;
 
@@ -80,7 +97,10 @@ function eventOccursOnDate(event, dateKey) {
     recurrenceType === "monthly_date" ||
     recurrenceType === "monthly"
   ) {
-    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const daysInMonth = new Date(
+      Date.UTC(year, month, 0)
+    ).getUTCDate();
+
     return day === Math.min(startDay, daysInMonth);
   }
 

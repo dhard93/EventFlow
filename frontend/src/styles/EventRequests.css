@@ -150,18 +150,12 @@
   padding-left: 1.5rem;
 }
 
-.event-requests-actions-heading {
-  position: sticky;
-  right: 0;
-  z-index: 2 !important;
-  background: #f8f9fc !important;
-}
-
 .event-requests-actions {
   position: sticky;
   right: 0;
   z-index: 1;
-  min-width: 19rem;
+  min-width: 12rem;
+  text-align: right;
   background: #ffffff;
   box-shadow: -5px 0 10px rgb(23 34 56 / 3%);
 }
@@ -173,6 +167,7 @@
 .event-requests-action-group {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.45rem;
   white-space: nowrap;
 }

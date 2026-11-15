@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "../styles/Analytics.css";
 import { API_URL } from "../config";
+import LoadingOverlay from "./LoadingOverlay";
 
 const TIME_RANGES = [
   { label: "Week", value: 1 },
@@ -80,7 +81,7 @@ function RequestBreakdown({ breakdown }) {
               #6366d9 0% ${percentages.approved}%,
               #e4a34c ${percentages.approved}% ${percentages.approved + percentages.denied}%,
               #dc6b6b ${percentages.approved + percentages.denied}% ${percentages.approved + percentages.denied + percentages.cancelled}%,
-              #dce1eb ${percentages.approved + percentages.denied + percentages.cancelled}% 100%
+              #30f838 ${percentages.approved + percentages.denied + percentages.cancelled}% 100%
             )`
           }}
         >
@@ -169,9 +170,6 @@ export default function Analytics({ organizationName, organizationId }) {
           `${base}/spaces/ranked/${timeRange}/${organizationId}`,
         ];
 
-        console.log("API URL:", API_URL);
-        console.log("Request URLs:", endpoints);
-
         const responses = await Promise.all(
           endpoints.map(url =>
             fetch(url, { signal: controller.signal })
@@ -245,6 +243,13 @@ export default function Analytics({ organizationName, organizationId }) {
 
   return (
     <main className="main-content analytics-page">
+
+      {/* Loading overlay */}
+      <LoadingOverlay
+        isLoading={loading}
+        message="Loading analytics..."
+      />
+
       <div className="analytics-content">
 
         {/* Time range selector */}
@@ -262,6 +267,7 @@ export default function Analytics({ organizationName, organizationId }) {
                   timeRange === option.value ? "active" : ""
                 }
                 onClick={() => setTimeRange(option.value)}
+                disabled={loading}
               >
                 {option.label}
               </button>
@@ -269,11 +275,7 @@ export default function Analytics({ organizationName, organizationId }) {
           </div>
         </div>
 
-        {loading ? (
-          <div className="analytics-card">
-            <p>Loading analytics...</p>
-          </div>
-        ) : error ? (
+        {loading ? null : error ? (
           <div className="analytics-card">
             <p>{error}</p>
           </div>

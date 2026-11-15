@@ -8,9 +8,8 @@ import { API_URL } from "./config";
 
 /*
   TODO:
-  - Analytics module
-  - Organize css files
-  - Test all endpoints
+  - Test all endpoints with SSE in 2 browsers
+  - Update powerpoint
 */
 
 export default function App() {
