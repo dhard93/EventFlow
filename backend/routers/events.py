@@ -34,49 +34,6 @@ EVENTS_QUERY = """
 # HELPER FUNCTIONS ###################################################
 ####################
 
-# Check if an event request's data and time is vacant for the requested space.
-def check_event_time(curs, req_id):
-    curs.execute("""
-        SELECT RE.space_id, RE.start_time, RE.end_time
-        FROM events RE
-        JOIN events E
-        ON E.id = %s
-        WHERE E.space_id = RE.space_id AND E.request_status_id = %s
-        AND E.start_time < RE.end_time AND E.end_time > RE.start_time
-    """, (req_id, APPROVED,))
-    rows = curs.fetchall()
-    return rows
-
-# Check if event request attendee count meets requested space capacity constraints and is bookable.
-def check_capacity(curs, req_id):
-    curs.execute("""
-        SELECT E.attendee_count, S.capacity
-        FROM events E
-        JOIN spaces S ON E.space_id = S.id
-        WHERE E.id = %s
-        AND E.attendee_count <= S.capacity AND S.is_bookable
-    """, (req_id,))
-    row = curs.fetchone()
-    return row
-
-# Check if an event request's requested chair/table numbers exceed
-# the limits of the requested space's max chair/table numbers
-def check_resources(curs, req_id):
-    curs.execute("""
-        SELECT *
-        FROM event_request_resources RR
-        JOIN events E ON E.id = RR.request_id
-        JOIN spaces S ON E.space_id = S.id
-        WHERE RR.request_id = %s
-        AND RR.quantity > CASE
-            WHEN RR.resource_type_id = %s THEN S.capacity
-            WHEN RR.resource_type_id = %s THEN S.table_max
-            ELSE 0
-        END
-    """, (req_id, CHAIR, TABLE))
-    rows = curs.fetchall()
-    return rows
-
 def send_notification(curs, user, n_type, n_content):
     curs.execute("""
         INSERT INTO notifications (user_id, type_id, content)
@@ -424,6 +381,7 @@ def get_user_req_events(user_id):
                 E.is_recurring = TRUE AND
                 E.recurrence_end_date >= CURRENT_DATE
             ))
+            ORDER BY E.start_time ASC
         """, (APPROVED, user_id))
         rows = cursor.fetchall()
         return rows

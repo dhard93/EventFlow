@@ -22,6 +22,7 @@ export default function MyAccount({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // Get existing account information
   useEffect(() => {
     const controller = new AbortController();
 
@@ -32,20 +33,29 @@ export default function MyAccount({
       try {
         const response = await fetch(
           `${API_URL}/users/account/${organizationId}/${userId}`,
-          { signal: controller.signal }
+          {
+            method: "GET",
+            signal: controller.signal,
+          }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to load account details.");
+          const details = await response.json().catch(() => null);
+
+          throw new Error(
+            details?.detail || "Failed to load account details."
+          );
         }
 
         const data = await response.json();
+
         setForm({
-            email: data.email ?? "",
-            password: "",
-            firstName: data.first_name ?? "",
-            lastName: data.last_name ?? "",
+          email: data.email ?? "",
+          password: "",
+          firstName: data.first_name ?? "",
+          lastName: data.last_name ?? "",
         });
+
       } catch (err) {
         if (err.name !== "AbortError") {
           setError(err.message || "Unable to load account.");
@@ -65,8 +75,10 @@ export default function MyAccount({
     }
 
     return () => controller.abort();
+
   }, [organizationId, userId]);
 
+  // Handle input changes
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -79,40 +91,56 @@ export default function MyAccount({
     setMessage("");
   }
 
+  // Update account information
   async function handleSubmit(event) {
     event.preventDefault();
+
     setSaving(true);
     setError("");
     setMessage("");
 
     try {
+      const updateData = {
+        email: form.email,
+        f_name: form.firstName,
+        l_name: form.lastName,
+      };
+
+      // Only send password when a new password is entered
+      if (form.password.trim() !== "") {
+        updateData.password = form.password;
+      }
+
       const response = await fetch(
-        `${API_URL}/users/${organizationId}/${userId}`,
+        `${API_URL}/users/account/${userId}`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-            first_name: form.firstName,
-            last_name: form.lastName,
-          }),
+          body: JSON.stringify(updateData),
         }
       );
 
       if (!response.ok) {
-        const details = await response.text();
+        const details = await response.json().catch(() => null);
+
         throw new Error(
-          details || "Failed to update account details."
+          details?.detail || "Failed to update account details."
         );
       }
 
       setMessage("Account details updated successfully.");
+
+      setForm((previous) => ({
+        ...previous,
+        password: "",
+      }));
+
       onUpdated?.();
+
     } catch (err) {
-      setError(err.message || "Unable to save changes.");
+      setError(err.message || "Unable to save account changes.");
     } finally {
       setSaving(false);
     }
@@ -167,10 +195,7 @@ export default function MyAccount({
               )}
 
               {message && (
-                <p
-                  className="my-account-message"
-                  role="status"
-                >
+                <p className="my-account-message" role="status">
                   {message}
                 </p>
               )}
@@ -180,6 +205,7 @@ export default function MyAccount({
                   <label htmlFor="account-email">
                     Email address
                   </label>
+
                   <input
                     id="account-email"
                     type="email"
@@ -196,6 +222,7 @@ export default function MyAccount({
                   <label htmlFor="account-password">
                     Password
                   </label>
+
                   <input
                     id="account-password"
                     type="password"
@@ -206,6 +233,7 @@ export default function MyAccount({
                     placeholder="Enter a new password"
                     disabled={saving}
                   />
+
                   <small>
                     Leave blank to keep your current password.
                   </small>
@@ -216,6 +244,7 @@ export default function MyAccount({
                     <label htmlFor="account-first-name">
                       First name
                     </label>
+
                     <input
                       id="account-first-name"
                       type="text"
@@ -232,6 +261,7 @@ export default function MyAccount({
                     <label htmlFor="account-last-name">
                       Last name
                     </label>
+
                     <input
                       id="account-last-name"
                       type="text"

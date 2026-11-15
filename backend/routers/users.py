@@ -324,19 +324,25 @@ class UserUpdateData(BaseModel):
     f_name: str | None = None
     l_name: str | None = None
 
+
 @router.patch("/users/account/{user_id}")
 def modify_user_account(user_id: int, data: UserUpdateData):
     connection = get_db_connection()
     cursor = connection.cursor()
+
     try:
+        if data.password:
+            data.password = hash_password(data.password)
+
         update_table(
-            curs, USERS, UserUpdateData, data,
-            "id = %s", (user_id,)
+            cursor, USERS, UserUpdateData,
+            data, "id = %s", (user_id,)
         )
         connection.commit()
-        return {"message":"Account info updated"}
-    except Exception:
+        return {"message": "Account info updated"}
+    except Exception as e:
         connection.rollback()
+        print("Account update error:", e)
         raise HTTPException(
             status_code=500,
             detail="Unable to update account info."
