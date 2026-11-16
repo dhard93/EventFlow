@@ -73,14 +73,11 @@ async def send_message(data: MessageData):
         ))
 
         receiver_id = cursor.fetchone()[0]
-
         connection.commit()
-
         await send_to_user(data.org_id, receiver_id, {
             "resource": "messages",
             "conversation_id": data.conv_id
         })
-        connection.commit()
 
         return {"message": "Message sent."}
 
