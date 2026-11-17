@@ -9,6 +9,7 @@ export default function Messages({
   userId,
   organizationId,
   onClose,
+  refresh,
   onMessagesRead,
   onMessageSent
 }) {
@@ -80,56 +81,10 @@ export default function Messages({
   }
 
   useEffect(() => {
-    if (!organizationId || !conversationId || !userId) return;
+      if (!refresh || !conversationId) return;
 
-    const eventSource = new EventSource(
-      `${API_URL}/events/stream/${organizationId}`,
-      { withCredentials: true }
-    );
-
-    eventSource.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (
-          data.resource !== "messages" ||
-          Number(data.conversation_id) !== Number(conversationId)
-        ) {
-          return;
-        }
-
-        await loadMessages();
-
-        // Only mark messages as read if the incoming message
-        // was sent by someone else.
-        if (String(data.sender_id) !== String(userId)) {
-          const response = await fetch(
-            `${API_URL}/messages/unread/${conversationId}/${userId}`,
-            {
-              method: "PATCH",
-              credentials: "include"
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error("Unable to mark messages as read.");
-          }
-
-          onMessagesRead?.(conversationId);
-        }
-
-      } catch (error) {
-        console.error("Error refreshing messages:", error);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("Messages SSE error:", error);
-    };
-
-    return () => eventSource.close();
-
-  }, [organizationId, conversationId, userId]);
+      loadMessages();
+  }, [refresh, conversationId]);
 
   useEffect(() => {
     if (!conversationId || !userId) return;

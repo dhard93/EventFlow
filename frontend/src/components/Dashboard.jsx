@@ -204,9 +204,7 @@ export default function Dashboard({
 
               case "messages":
                   fetchConversations();
-                  if (selectedConversation) {
-                      setMessagesRefresh(prev => prev + 1);
-                  }
+                  setMessagesRefresh(prev => prev + 1);
                   break;
 
               default:
