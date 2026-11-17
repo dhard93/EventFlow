@@ -159,6 +159,8 @@ def login(data: LoginRequest, response: Response):
 @router.post("/users/logout")
 def logout(request: Request, response: Response):
     token = request.cookies.get("eventflow_session")
+    print("LOGOUT TOKEN PRESENT:", bool(token))
+    print("LOGOUT TOKEN HASH:", hash_session_token(token) if token else None)
     if token:
         connection = get_db_connection()
         cursor = connection.cursor()
@@ -169,6 +171,7 @@ def logout(request: Request, response: Response):
                 WHERE session_token_hash = %s
             """, (hash_session_token(token),))
             connection.commit()
+            print("ROWS DELETED:", cursor.rowcount)
             return {"message": "Logged out successfully"}
         except Exception:
                 connection.rollback()
