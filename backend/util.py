@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import Request, HTTPException
 from pydantic import BaseModel
 from security import hash_password
 
@@ -38,3 +38,41 @@ def update_table(curs, table, model, data, where_clause, values):
             SET {set_clause}
             WHERE {where_clause}
         """, (*update_cols.values(), *values))
+
+
+def get_session_user_id(request: Request):
+    token = request.cookies.get("eventflow_session")
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Not logged in"
+        )
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT user_id
+            FROM user_sessions
+            WHERE session_token_hash = %s
+            AND expires_at > %s
+        """, (
+            hash_session_token(token),
+            datetime.now(timezone.utc)
+        ))
+
+        session = cursor.fetchone()
+
+        if not session:
+            raise HTTPException(
+                status_code=401,
+                detail="Session invalid or expired"
+            )
+
+        return session[0]
+
+    finally:
+        cursor.close()
+        connection.close()

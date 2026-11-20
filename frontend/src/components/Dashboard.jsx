@@ -1,6 +1,6 @@
 
 import '../styles/Dashboard.css';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminSidebar from "./AdminSidebar";
 import GuestSidebar from "./GuestSidebar";
 import Calendar from './Calender';
@@ -151,7 +151,11 @@ export default function Dashboard({
   const [eventsRefresh, setEventsRefresh] = useState(0);
   const [myEventsRefresh, setMyEventsRefresh] = useState(0);
   const [messagesRefresh, setMessagesRefresh] = useState(0);
+  const selectedConversationRef = useRef(null);
 
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation;
+}, [selectedConversation]);
 
   useEffect(() => {
       if (!organizationId || !userId) return;
@@ -162,53 +166,85 @@ export default function Dashboard({
       );
 
       eventSource.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          console.log("SSE RECEIVED:", data);
+          try {
+              const data = JSON.parse(event.data);
 
-          switch (data.resource) {
+              console.log("SSE RECEIVED:", data);
 
-              case "events":
-                  setEventsRefresh(prev => prev + 1);
-                  setMyEventsRefresh(prev => prev + 1);
-                  break;
+              switch (data.resource) {
 
-              case "event_requests":
-                  fetch(`${API_URL}/events/pending/${organizationId}`, {
-                      credentials: "include"
-                  })
-                      .then(response => response.json())
-                      .then(requests => {
-                          onEventRequestsChange(
-                              Array.isArray(requests) && requests.length > 0
-                          );
+                  case "events":
+                      setEventsRefresh(prev => prev + 1);
+                      setMyEventsRefresh(prev => prev + 1);
+                      break;
+
+                  case "event_requests":
+                      fetch(`${API_URL}/events/pending/${organizationId}`, {
+                          credentials: "include"
                       })
-                      .catch(error => console.error(error));
-                  break;
+                          .then(response => {
+                              if (!response.ok) {
+                                  throw new Error("Unable to fetch event requests.");
+                              }
+                              return response.json();
+                          })
+                          .then(requests => {
+                              onEventRequestsChange(
+                                  Array.isArray(requests) && requests.length > 0
+                              );
+                          })
+                          .catch(error => console.error(error));
+                      break;
 
-              case "notifications":
-                  fetch(`${API_URL}/notifications/unread/${userId}`, {
-                      credentials: "include"
-                  })
-                      .then(response => response.json())
-                      .then(notifications => {
-                          onNotificationsChange(
-                              Array.isArray(notifications) && notifications.length > 0
-                          );
+                  case "notifications":
+                      fetch(`${API_URL}/notifications/unread/${userId}`, {
+                          credentials: "include"
                       })
-                      .catch(error => console.error(error));
-                  break;
+                          .then(response => {
+                              if (!response.ok) {
+                                  throw new Error("Unable to fetch notifications.");
+                              }
+                              return response.json();
+                          })
+                          .then(notifications => {
+                              onNotificationsChange(
+                                  Array.isArray(notifications) &&
+                                  notifications.length > 0
+                              );
+                          })
+                          .catch(error => console.error(error));
+                      break;
 
-              case "conversations":
-                  fetchConversations();
-                  break;
+                  case "conversations":
+                      fetchConversations();
+                      break;
 
-              case "messages":
-                  fetchConversations();
-                  setMessagesRefresh(prev => prev + 1);
-                  break;
+                  case "messages": {
+                      // Always update the conversation list.
+                      fetchConversations();
 
-              default:
-                  console.log("Unknown SSE event:", data);
+                      // Only refresh messages if the affected conversation
+                      // is currently open.
+                      const activeConversation =
+                          selectedConversationRef.current;
+
+                      if (
+                          activeConversation &&
+                          Number(activeConversation.conversation_id) ===
+                          Number(data.conversation_id)
+                      ) {
+                          setMessagesRefresh(prev => prev + 1);
+                      }
+
+                      break;
+                  }
+
+                  default:
+                      console.log("Unknown SSE event:", data);
+              }
+
+          } catch (error) {
+              console.error("Error processing SSE event:", error);
           }
       };
 
@@ -327,7 +363,7 @@ export default function Dashboard({
 
     try {
       const response = await fetch(
-        `${API_URL}/conversations/${userId}`,
+        `${API_URL}/conversations`,
         {
           method: "GET",
           credentials: "include",
@@ -483,13 +519,14 @@ export default function Dashboard({
 
               <Conversations
                 conversations={conversations}
+                loading={isLoading}
                 error={conversationsError}
                 organizationId={organizationId}
                 userId={userId}
                 onConversationClick={setSelectedConversation}
-                onConversationSent={(conversation) => {
-                  setSelectedConversation(conversation);
-                  fetchConversations();
+                onConversationSent={async (conversation) => {
+                    await fetchConversations();
+                    setSelectedConversation(conversation);
                 }}
               />
             </div>

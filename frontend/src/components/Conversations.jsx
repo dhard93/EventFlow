@@ -56,95 +56,77 @@ export default function Conversations({
   async function handleSendMessage(e) {
     e.preventDefault();
 
-    if (!selectedUser || !message.trim()) return;
+    if (!selectedUser) return;
 
-    setIsLoading(true);
     setComposeError("");
 
+    const recipientId = Number(selectedUser);
+    const currentUserId = Number(userId);
+
+    // Check whether a conversation already exists.
+    const existingConversation = conversations.find((conversation) => {
+      const participants = [
+        Number(conversation.user1_id),
+        Number(conversation.user2_id)
+      ];
+
+      return (
+        participants.includes(currentUserId) &&
+        participants.includes(recipientId)
+      );
+    });
+
+    // If it exists, open it instead of creating a new one.
+    if (existingConversation) {
+      setShowCompose(false);
+      setMessage("");
+      setSelectedUser("");
+
+      onConversationSent?.(existingConversation);
+      return;
+    }
+
+    // Otherwise, require a message to create the conversation.
+    if (!message.trim()) return;
+
+    setIsLoading(true);
+
     try {
-      const recipientId = Number(selectedUser);
-      const currentUserId = Number(userId);
+      const response = await fetch(`${API_URL}/conversations`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          org_id: organizationId,
+          user1_id: userId,
+          user2_id: recipientId,
+          msg_content: message.trim()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to create conversation.");
+      }
+
+      const data = await response.json();
+
+      if (!data.conversation_id) {
+        throw new Error("Missing conversation ID from server.");
+      }
 
       const recipient = users.find(
         (user) => Number(user.id) === recipientId
       );
 
-      if (!recipient) {
-        throw new Error("Please select a valid recipient.");
-      }
-
-      // Find an existing conversation using its two participant IDs.
-      const existingConversation = conversations.find(
-        (conversation) => {
-          const participants = [
-            Number(conversation.user1_id),
-            Number(conversation.user2_id)
-          ];
-
-          return (
-            participants.includes(currentUserId) &&
-            participants.includes(recipientId)
-          );
-        }
-      );
-
-      let conversation;
-
-      if (existingConversation) {
-        // Send to an existing conversation.
-        const response = await fetch(`${API_URL}/messages`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            org_id: organizationId,
-            conv_id: existingConversation.conversation_id,
-            sender_id: userId,
-            message: message.trim()
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Unable to send message.");
-        }
-
-        conversation = existingConversation;
-      } else {
-        // Create a new conversation with its first message.
-        const response = await fetch(`${API_URL}/conversations`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            org_id: organizationId,
-            user1_id: userId,
-            user2_id: recipientId,
-            msg_content: message.trim()
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Unable to create conversation.");
-        }
-
-        const data = await response.json();
-
-        if (!data.conversation_id) {
-          throw new Error("Missing conversation ID from server.");
-        }
-
-        conversation = {
-          conversation_id: data.conversation_id,
-          user1_id: userId,
-          user2_id: recipientId,
-          other_user_name: recipient.name,
-          has_unread_message: false
-        };
-      }
+      const conversation = {
+        conversation_id: data.conversation_id,
+        user1_id: userId,
+        user2_id: recipientId,
+        other_user_name: recipient?.name,
+        has_unread_message: false
+      };
 
       setShowCompose(false);
       setMessage("");
@@ -153,7 +135,7 @@ export default function Conversations({
       onConversationSent?.(conversation);
 
     } catch (err) {
-      console.error("Error isLoading message:", err);
+      console.error("Error creating conversation:", err);
       setComposeError(err.message);
     } finally {
       setIsLoading(false);
@@ -312,11 +294,7 @@ export default function Conversations({
                 <button
                   type="submit"
                   className="compose-send"
-                  disabled={
-                    isLoading ||
-                    !selectedUser ||
-                    !message.trim()
-                  }
+                  disabled={isLoading || !selectedUser}
                 >
                   {isLoading ? "Sending..." : "Send Message"}
                 </button>
