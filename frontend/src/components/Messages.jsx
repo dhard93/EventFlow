@@ -9,7 +9,6 @@ export default function Messages({
   userId,
   organizationId,
   onClose,
-  refresh,
   onMessagesRead,
   onMessageSent
 }) {
@@ -81,10 +80,44 @@ export default function Messages({
   }
 
   useEffect(() => {
-      if (!refresh || !conversationId) return;
+    function handleIncomingMessage(event) {
+      const newMessage = event.detail;
 
-      loadMessages();
-  }, [refresh, conversationId]);
+      if (
+        Number(newMessage.conversation_id) !== Number(conversationId)
+      ) {
+        return;
+      }
+
+      setMessages(previous => {
+        // Prevent duplicate messages.
+        if (
+          previous.some(
+            message => Number(message.id) === Number(newMessage.id)
+          )
+        ) {
+          return previous;
+        }
+
+        return [
+          ...previous,
+          normalizeMessage(newMessage, previous.length)
+        ];
+      });
+    }
+
+    window.addEventListener(
+      "new-conversation-message",
+      handleIncomingMessage
+    );
+
+    return () => {
+      window.removeEventListener(
+        "new-conversation-message",
+        handleIncomingMessage
+      );
+    };
+  }, []);
 
   useEffect(() => {
     if (!conversationId || !userId) return;
@@ -169,9 +202,25 @@ export default function Messages({
         throw new Error("Unable to send message.");
       }
 
-      setMessageText("");
+      const data = await response.json();
+      const newMessage = {
+        ...data.message,
+        conversation_id: conversationId
+      };
 
-      await loadMessages();
+      setMessages(previous => {
+        if (
+          previous.some(
+            message => Number(message.id) === Number(newMessage.id)
+          )
+        ) {
+          return previous;
+        }
+
+        return [...previous, normalizeMessage(newMessage, previous.length)];
+      });
+
+      setMessageText("");
 
       onMessageSent?.(conversationId);
 
@@ -249,9 +298,7 @@ export default function Messages({
             </p>
           )}
 
-          {loading ? (
-            <div></div>
-          ) : messages.length === 0 ? (
+          {!loading && messages.length === 0 ? (
             <div className="messages-empty">
               <div className="messages-empty-mark">E</div>
               <h2>No messages yet</h2>

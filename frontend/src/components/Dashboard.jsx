@@ -152,7 +152,6 @@ export default function Dashboard({
 
   const [eventsRefresh, setEventsRefresh] = useState(0);
   const [myEventsRefresh, setMyEventsRefresh] = useState(0);
-  const [messagesRefresh, setMessagesRefresh] = useState({});
 
 
   useEffect(() => {
@@ -249,10 +248,11 @@ export default function Dashboard({
                           });
 
                       // Refresh only the currently open conversation.
-                      setMessagesRefresh(previous => ({
-                          ...previous,
-                          [conversationId]: (previous[conversationId] || 0) + 1
-                      }));
+                      window.dispatchEvent(
+                          new CustomEvent("new-conversation-message", {
+                              detail: data.message
+                          })
+                      );
 
                   } else {
                       // The user isn't viewing this conversation.
@@ -282,7 +282,7 @@ export default function Dashboard({
           eventSource.close();
       };
 
-  }, [organizationId, userId, selectedConversation]);
+  }, [organizationId, userId]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -685,7 +685,6 @@ export default function Dashboard({
           userId={userId}
           organizationId={organizationId}
           onClose={() => setSelectedConversation(null)}
-          refresh={messagesRefresh[selectedConversation.conversation_id] || 0}
           onMessagesRead={(conversationId) => {
             setConversations((previous) =>
               previous.map((conversation) =>

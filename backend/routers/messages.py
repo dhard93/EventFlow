@@ -60,10 +60,18 @@ async def send_message(data: MessageData):
             new_message AS (
                 INSERT INTO messages (conversation_id, sender_id, message)
                 VALUES (%s, %s, %s)
-                RETURNING id
+                RETURNING id, conversation_id, sender_id, message, date_created
             )
-            SELECT receiver.receiver_id
+            SELECT
+                receiver.receiver_id,
+                new_message.id,
+                new_message.conversation_id,
+                new_message.sender_id,
+                new_message.message,
+                new_message.date_created,
+                U.f_name || ' ' || U.l_name AS sender_name
             FROM receiver, new_message
+            JOIN users U ON U.id = new_message.sender_id
         """, (
             data.sender_id,
             data.conv_id,
@@ -72,11 +80,27 @@ async def send_message(data: MessageData):
             data.message
         ))
 
-        receiver_id = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        receiver_id = result[0]
+        message_id = result[1]
+        conversation_id = result[2]
+        sender_id = result[3]
+        message = result[4]
+        date_created = result[5]
+        sender_name = result[6]
+
         connection.commit()
+
         await send_to_user(data.org_id, receiver_id, {
             "resource": "messages",
-            "conversation_id": data.conv_id
+            "conversation_id": conversation_id,
+            "message": {
+                "id": message_id,
+                "sender_id": sender_id,
+                "message": message,
+                "date_created": date_created.isoformat(),
+                "sender_name": sender_name
+            }
         })
 
         return {"message": "Message sent."}
