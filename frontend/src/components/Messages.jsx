@@ -203,6 +203,10 @@ export default function Messages({
         }
       }}
     >
+      <LoadingOverlay
+        isLoading={loading}
+        message="Loading messages..."
+      />
       <section
         className="messages-card"
         role="dialog"
@@ -246,9 +250,7 @@ export default function Messages({
           )}
 
           {loading ? (
-            <div className="messages-loading">
-              <LoadingOverlay />
-            </div>
+            <div></div>
           ) : messages.length === 0 ? (
             <div className="messages-empty">
               <div className="messages-empty-mark">E</div>

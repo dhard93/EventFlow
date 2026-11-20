@@ -1,6 +1,6 @@
 
 import '../styles/Dashboard.css';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AdminSidebar from "./AdminSidebar";
 import GuestSidebar from "./GuestSidebar";
 import Calendar from './Calender';
@@ -136,6 +136,8 @@ export default function Dashboard({
   const [showEventRequests, setShowEventRequests] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const selectedConversationRef = useRef(selectedConversation);
+  selectedConversationRef.current = selectedConversation;
   const [conversations, setConversations] = useState([]);
   const [conversationsError, setConversationsError] = useState(null);
   const [today] = useState(() => new Date());
@@ -150,7 +152,7 @@ export default function Dashboard({
 
   const [eventsRefresh, setEventsRefresh] = useState(0);
   const [myEventsRefresh, setMyEventsRefresh] = useState(0);
-  const [messagesRefresh, setMessagesRefresh] = useState(0);
+  const [messagesRefresh, setMessagesRefresh] = useState({});
 
 
   useEffect(() => {
@@ -202,10 +204,70 @@ export default function Dashboard({
                   fetchConversations();
                   break;
 
-              case "messages":
-                  fetchConversations();
-                  setMessagesRefresh(prev => prev + 1);
+              case "messages": {
+                  const conversationId = Number(data.conversation_id);
+
+                  const isConversationOpen =
+                      Number(selectedConversationRef.current?.conversation_id) ===
+                      conversationId;
+
+                  if (isConversationOpen) {
+                      // The user is viewing this conversation.
+                      // Automatically mark its incoming messages as read.
+                      fetch(
+                          `${API_URL}/messages/unread/${conversationId}/${userId}`,
+                          {
+                              method: "PATCH",
+                              credentials: "include"
+                          }
+                      )
+                          .then(response => {
+                              if (!response.ok) {
+                                  throw new Error("Unable to mark messages as read.");
+                              }
+
+                              // Remove the unread indicator.
+                              setConversations(previous =>
+                                  previous.map(conversation =>
+                                      Number(conversation.conversation_id) === conversationId
+                                          ? { ...conversation, has_unread_message: false }
+                                          : conversation
+                                  )
+                              );
+                          })
+                          .catch(error => {
+                              console.error("Error marking messages as read:", error);
+
+                              // Keep the unread indicator if marking as read fails.
+                              setConversations(previous =>
+                                  previous.map(conversation =>
+                                      Number(conversation.conversation_id) === conversationId
+                                          ? { ...conversation, has_unread_message: true }
+                                          : conversation
+                                  )
+                              );
+                          });
+
+                      // Refresh only the currently open conversation.
+                      setMessagesRefresh(previous => ({
+                          ...previous,
+                          [conversationId]: (previous[conversationId] || 0) + 1
+                      }));
+
+                  } else {
+                      // The user isn't viewing this conversation.
+                      // Set its unread indicator without fetching conversations again.
+                      setConversations(previous =>
+                          previous.map(conversation =>
+                              Number(conversation.conversation_id) === conversationId
+                                  ? { ...conversation, has_unread_message: true }
+                                  : conversation
+                          )
+                      );
+                  }
+
                   break;
+              }
 
               default:
                   console.log("Unknown SSE event:", data);
@@ -220,7 +282,7 @@ export default function Dashboard({
           eventSource.close();
       };
 
-  }, [organizationId, userId]);
+  }, [organizationId, userId, selectedConversation]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -623,7 +685,7 @@ export default function Dashboard({
           userId={userId}
           organizationId={organizationId}
           onClose={() => setSelectedConversation(null)}
-          refresh={messagesRefresh}
+          refresh={messagesRefresh[selectedConversation.conversation_id] || 0}
           onMessagesRead={(conversationId) => {
             setConversations((previous) =>
               previous.map((conversation) =>
